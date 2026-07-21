@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Firefox Policy Generator
+Comment=Create and manage Firefox enterprise policies.json
+Exec=ffpolicy
+Icon=ffpolicy
+Categories=Settings;System;Utility;
+Terminal=false
