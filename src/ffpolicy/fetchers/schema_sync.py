@@ -126,7 +126,7 @@ def merge_policy_schema(
     )
 
 
-def _load_bundled_schema() -> PolicySchema:
+def load_bundled_schema() -> PolicySchema:
     resource = importlib.resources.files("ffpolicy.resources").joinpath("schema_backup.json")
     return PolicySchema.model_validate(json.loads(resource.read_text()))
 
@@ -194,4 +194,4 @@ def sync_schema(session: requests.Session | None = None) -> tuple[PolicySchema, 
         )
         return schema, "cached"
 
-    return _load_bundled_schema(), "bundled"
+    return load_bundled_schema(), "bundled"
