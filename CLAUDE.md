@@ -4,62 +4,103 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**fedora-policy-generator** is a web-based generator for creating Firefox policies. The tool enables users to generate policy configurations through an interactive web interface.
-
-## Technology Stack
-
-This project currently follows the JavaScript/TypeScript ecosystem for web development. Once initialized, the tech stack will likely include:
-- Frontend framework (React or similar)
-- Build tooling (Webpack/Vite/Next.js)
-- Policy generation/validation logic
-- Firefox policy schema handling
-
-## Architecture Guidance
-
-When developing this generator, consider these architectural principles:
-
-1. **Policy Generation Engine**: Core logic to validate and serialize Firefox policies into consumable formats (JSON/XML)
-2. **Web UI Layer**: Interactive interface for users to configure policies without manual editing
-3. **Schema Handling**: Firefox policy schema definitions (from Mozilla's official documentation) as the source of truth
-4. **Export/Download**: Mechanisms to download generated policies in appropriate formats
+**fedora-policy-generator** (package name `ffpolicy`) is a Python desktop/CLI application
+that generates, validates, and manages Firefox enterprise `policies.json` configurations. It
+ships as a PySide6 GUI, a headless CLI, and a self-contained Linux AppImage. See
+`docs/IMPLEMENTATION_PLAN.md` for the full design blueprint this codebase follows.
 
 ## Development Commands
 
-Once the project is initialized, these commands will be commonly used:
-
 ```bash
-# Install dependencies
-npm install
+# Install (editable, with dev extras)
+pip install -e ".[dev]"
 
-# Start development server
-npm run dev
+# Run the GUI
+python -m ffpolicy
 
-# Build for production
-npm run build
+# Run the CLI (any args route to cli.py instead of the GUI)
+python -m ffpolicy validate tests/fixtures/sample_input.yaml --offline
+python -m ffpolicy generate tests/fixtures/sample_input.yaml -o policies.json --offline
+python -m ffpolicy export tests/fixtures/sample_input.yaml --target custom --custom-path ./out --offline
+python -m ffpolicy preview tests/fixtures/sample_input.yaml
 
-# Run tests (single test: npm test -- path/to/test.js)
-npm test
+# Test (GUI tests need an offscreen Qt platform in headless/CI environments)
+QT_QPA_PLATFORM=offscreen pytest
+QT_QPA_PLATFORM=offscreen pytest tests/unit/test_validator.py -k test_force_installed_requires_install_url
 
-# Lint code
-npm run lint
+# Lint / type-check / import-boundary check
+ruff check src tests
+mypy src
+lint-imports          # enforces core/models never importing gui (setup.cfg)
 
-# Type check (if TypeScript is used)
-npm run type-check
+# Regenerate the golden-file fixture after an intentional output-format change
+make update-golden
+
+# Build a Linux AppImage (requires appimagetool on PATH)
+bash src/ffpolicy/packager/build_appimage.sh 0.1.0
 ```
 
-## Key Concepts
+Headless environments are missing Qt's runtime `.so`s by default even for offscreen
+rendering; without them PySide6 imports abort with `libEGL.so.1`/`libxcb-cursor.so.0`
+errors. Install `libegl1 libgl1 libxkbcommon0 libxcb-cursor0 libxcb-image0
+libxcb-render-util0 libxcb-util1` (already handled in `.github/workflows/build.yml`).
 
-- **Firefox Policies**: Understand the structure of Firefox group policies (Group Policy Objects for Windows, configuration for macOS/Linux)
-- **Policy Schema**: Mozilla provides a formal schema for policies; this generator should validate against it
-- **User Experience**: The main value is reducing complexity—users should be able to generate correct policies without deep Firefox policy knowledge
+## Architecture
 
-## Important Notes
+```
+src/ffpolicy/
+├── core/       # Pure logic: generator, validator, version_check, paths, errors.
+│               # NEVER imports gui/ or PySide6 - enforced by lint-imports.
+├── models/     # Pydantic models: policy_schema (parsed Mozilla schema),
+│               # policy_document (user's working set), extension, amo.
+├── fetchers/   # Network + disk cache: base (HTTP/ETag), cache (TTL disk cache),
+│               # schema_sync (Mozilla policy-templates -> PolicySchema),
+│               # amo_client (addons.mozilla.org search/detail).
+├── gui/        # PySide6 UI - depends only on core/ + models/, never the reverse.
+├── resources/  # Bundled schema_backup.json + categories.yaml (offline fallback).
+├── packager/   # ffpolicy.spec (PyInstaller), build_appimage.sh, .desktop, icon.
+├── cli.py      # Typer CLI: validate / generate / export / preview.
+└── __main__.py # Dispatches to cli.py when argv has args, else the GUI.
+```
 
-- Ensure generated policies are always valid according to Mozilla's Firefox policy schema
-- Test generated policies against actual Firefox installations when possible
-- Keep policy schema definitions in sync with Mozilla's official documentation
-- Consider different deployment targets (Windows GPO, macOS MDM, Linux managed systems)
+**Dependency-flow rule:** `gui` -> `core` + `models`; `fetchers` -> `models`; `core` and
+`models` must never import `gui` or `PySide6`. This is what keeps the CLI and unit tests
+fast and headless, and it's mechanically enforced by `lint-imports` (config in
+`setup.cfg`), not just convention.
 
-## Repository Branches
+**Schema fallback chain** (`fetchers/schema_sync.sync_schema`): live fetch of Mozilla's
+`schema.json` + `README.md` -> ETag-cached disk copy -> bundled
+`resources/schema_backup.json`. Every call returns `(schema, tier)` so callers (CLI,
+GUI status bar) can report which tier was used. `load_bundled_schema()` skips network
+entirely for `--offline` CLI runs and tests.
 
-Work on feature branches (`claude/*` for Claude-driven development) and create pull requests for review before merging to main.
+**Deterministic output:** `core/generator.render_policies_json` always sorts keys, so the
+same `PolicyDocument` produces byte-identical `policies.json` - this is asserted by the
+golden-file test (`tests/functional/test_golden.py` vs `tests/fixtures/golden/`).
+Regenerate the golden file only for an intentional format change, via `make update-golden`.
+
+**Form building** (`gui/widgets/field_widgets.build_field_editor`): recursively maps a
+`PolicyField` tree to editor widgets by `ValueType` (bool/string/int/enum/url -> plain
+widgets, object -> recurses into a group box, array -> add/remove rows). A wildcard-keyed
+object child (`key == "*"`, e.g. `ExtensionSettings`) falls back to a raw JSON editor
+instead of trying to synthesize a fixed-field form - `ExtensionSettings` itself gets a
+dedicated `gui/extension_manager.py` (AMO search + table) instead of the generic form.
+
+**Validation** (`core/validator.validate_document`) runs up to three independent layers
+and returns a flat `list[ValidationIssue]`: JSON-Schema validation (when a raw JSON
+schema is supplied), `ExtensionSettings` required-field rules (`force_installed`/
+`normal_installed` require `install_url`; `allowed`/`blocked` must not set it), and
+Firefox min/max version compatibility warnings against a `PolicySchema`. GUI and CLI both
+consume the same issue list.
+
+## Testing conventions
+
+- `tests/unit/` - core/models/fetchers/gui logic in isolation; network calls are mocked
+  with `responses`, not hit live.
+- `tests/functional/` - CLI end-to-end (`typer.testing.CliRunner`), export path
+  resolution, and the golden-file check.
+- Cache-dependent tests must monkeypatch `platformdirs.user_cache_dir` to a `tmp_path`,
+  not `ffpolicy.fetchers.cache.cache_dir` directly - the latter still calls the real
+  `platformdirs` function internally and won't isolate the test.
+- GUI tests use `pytest-qt`'s `qtbot`; construct `MainWindow(schema=..., schema_tier=...)`
+  with `fetchers.schema_sync.load_bundled_schema()` rather than letting it hit the network.
