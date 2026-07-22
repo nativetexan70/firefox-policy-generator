@@ -42,6 +42,7 @@ Privacy & Network:
   - EnableTrackingProtection
   - SanitizeOnShutdown
   - DisableFirefoxStudies
+  - IPProtectionAvailable
 
 Updates:
   - DisableAppUpdate
