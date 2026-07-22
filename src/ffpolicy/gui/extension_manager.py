@@ -21,7 +21,12 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from ffpolicy.fetchers.amo_client import AmoRateLimitedError, search_extensions
+from ffpolicy.fetchers.amo_client import (
+    AmoRateLimitedError,
+    get_addon_detail,
+    parse_addon_slug_from_url,
+    search_extensions,
+)
 from ffpolicy.models.extension import MODES_REQUIRING_INSTALL_URL, InstallationMode
 
 _ADDON_ROLE = Qt.ItemDataRole.UserRole
@@ -57,6 +62,27 @@ class ExtensionManager(QWidget):
         self._search_status = QLabel("")
         self._search_status.setStyleSheet("color: #6b7480;")
         layout.addWidget(self._search_status)
+
+        url_header = QLabel("Add from an addons.mozilla.org link")
+        url_header.setProperty("role", "sectionHeader")
+        layout.addWidget(url_header)
+
+        url_row = QHBoxLayout()
+        url_row.setSpacing(8)
+        self._url_box = QLineEdit()
+        self._url_box.setPlaceholderText(
+            "https://addons.mozilla.org/en-US/firefox/addon/<name>/"
+        )
+        self._url_box.returnPressed.connect(self._on_add_from_url)
+        url_add_button = QPushButton("Add")
+        url_add_button.clicked.connect(self._on_add_from_url)
+        url_row.addWidget(self._url_box, 1)
+        url_row.addWidget(url_add_button)
+        layout.addLayout(url_row)
+
+        self._url_status = QLabel("")
+        self._url_status.setStyleSheet("color: #6b7480;")
+        layout.addWidget(self._url_status)
 
         manual_header = QLabel("Add manually")
         manual_header.setProperty("role", "sectionHeader")
@@ -128,6 +154,35 @@ class ExtensionManager(QWidget):
     def _on_result_chosen(self, item: QListWidgetItem) -> None:
         addon = item.data(_ADDON_ROLE)
         self.add_manual(addon.guid, InstallationMode.FORCE_INSTALLED, addon.install_url)
+
+    def _on_add_from_url(self) -> None:
+        url = self._url_box.text().strip()
+        if not url:
+            return
+
+        slug = parse_addon_slug_from_url(url)
+        if slug is None:
+            self._url_status.setText(
+                "Not a recognized addons.mozilla.org link - paste the addon's page URL."
+            )
+            return
+
+        try:
+            addon = get_addon_detail(slug)
+        except AmoRateLimitedError:
+            self._url_status.setText(
+                "AMO lookup unavailable (rate-limited) - enter GUID manually below."
+            )
+            return
+        except Exception:  # noqa: BLE001 - any network/lookup failure degrades to manual entry
+            self._url_status.setText(
+                "Couldn't look up that link - enter GUID manually below."
+            )
+            return
+
+        self.add_manual(addon.guid, InstallationMode.FORCE_INSTALLED, addon.install_url)
+        self._url_status.setText(f"Added {addon.name} ({addon.guid}).")
+        self._url_box.clear()
 
     def _on_manual_add(self) -> None:
         guid = self._manual_guid.text().strip()

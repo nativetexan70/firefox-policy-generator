@@ -327,19 +327,23 @@ startup and export is a footer-bar button, not a menu action or dialog.
 ### 4.2 Categories (`resources/categories.yaml`)
 
 Maps every policy name to one of: **Security, Extensions, UI/Bookmarks,
-Privacy & Network, Updates, Custom Preferences** - unchanged from the original
-plan. Unmapped/new policies fall into an **"Uncategorized"** bucket so nothing
-is ever hidden.
+Privacy & Network, Updates, AI Controls, Custom Preferences** (AI Controls
+added later - see the `AIControls`/`GenerativeAI` policies). Unmapped/new
+policies fall into an **"Uncategorized"** bucket so nothing is ever hidden.
 
 ### 4.3 Extension Manager screen (as built)
 
 `gui/extension_manager.py`: a search box + button, a results list (double-click
-to add), a **manual-entry row** (GUID / mode / install URL / Add - always
-available, independent of whether search works), and a configured-extensions
-table: *GUID · Mode · Install URL · Remove*, with column resize modes tuned so
-Mode and Remove don't collapse to unreadable slivers (`Interactive` with
-explicit initial widths, not `ResizeToContents` - that mode doesn't reliably
-re-measure widget-based cells added after the table is first laid out).
+to add); an **"Add from an addons.mozilla.org link"** row - paste a listing URL
+(e.g. `.../firefox/addon/bitwarden-password-manager/`) and it resolves straight
+to GUID/install URL via `amo_client.parse_addon_slug_from_url` +
+`get_addon_detail`, no search needed; a **manual-entry row** (GUID / mode /
+install URL / Add - always available, independent of whether search or the
+link lookup works); and a configured-extensions table: *GUID · Mode · Install
+URL · Remove*, with column resize modes tuned so Mode and Remove don't collapse
+to unreadable slivers (`Interactive` with explicit initial widths, not
+`ResizeToContents` - that mode doesn't reliably re-measure widget-based cells
+added after the table is first laid out).
 
 ### 4.4 Presets menu (added after the original plan - see §9)
 

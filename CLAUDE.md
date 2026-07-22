@@ -89,7 +89,11 @@ dedicated `gui/extension_manager.py` (AMO search + table) instead of the generic
 Extension search degrades gracefully rather than dead-ending: results are re-ranked by
 name relevance (`fetchers/amo_client.rank_by_name_relevance`), and an always-visible
 manual-entry row (GUID/mode/install URL) covers rate-limiting, a restricted network, or
-an add-on that simply isn't on AMO.
+an add-on that simply isn't on AMO. A third path, "Add from an addons.mozilla.org link",
+covers pasting a listing URL directly (e.g. `.../firefox/addon/bitwarden-password-manager/`):
+`amo_client.parse_addon_slug_from_url` extracts the slug and `get_addon_detail` fetches
+its GUID/name/current install URL, so no search round-trip is needed - same failure
+handling (rate-limit / lookup-failure messages pointing back at manual entry) as search.
 
 **Validation** (`core/validator.validate_document`) runs up to three independent layers
 and returns a flat `list[ValidationIssue]`: JSON-Schema validation (when a raw JSON
