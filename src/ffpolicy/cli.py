@@ -11,7 +11,13 @@ import yaml
 
 from ffpolicy.core.errors import ExportError, FfPolicyError
 from ffpolicy.core.generator import export_policies_json, render_policies_json
-from ffpolicy.core.paths import ExportTarget, resolve_export_path, target_requires_privileges
+from ffpolicy.core.importer import import_policies_json
+from ffpolicy.core.paths import (
+    ExportTarget,
+    discover_installed_policies,
+    resolve_export_path,
+    target_requires_privileges,
+)
 from ffpolicy.core.presets import Preset, apply_preset, load_bundled_presets, load_preset
 from ffpolicy.core.validator import IssueLevel, has_errors, validate_document
 from ffpolicy.fetchers.schema_sync import load_bundled_schema, sync_schema
@@ -193,6 +199,88 @@ def export(
         raise typer.Exit(code=1) from exc
 
     typer.echo(f"Wrote {written}")
+
+
+@app.command()
+def discover() -> None:
+    """List existing policies.json files found at standard locations on this system."""
+    found = discover_installed_policies()
+    if not found:
+        typer.echo("No existing policies.json found at any standard location.")
+        return
+
+    for found_target, path in found:
+        typer.echo(f"{found_target.value}  ->  {path}")
+
+
+@app.command(name="import")
+def import_policies(
+    input_file: Annotated[
+        Path | None, typer.Argument(help="Explicit policies.json path to import")
+    ] = None,
+    target: Annotated[
+        ExportTarget | None,
+        typer.Option(help="Import from a standard target location instead of a path"),
+    ] = None,
+    custom_path: Annotated[
+        Path | None, typer.Option(help="Required when --target=custom")
+    ] = None,
+    output: Annotated[
+        Path,
+        typer.Option(
+            "--output", "-o", help="Where to write the imported policy set (.yaml/.yml or .json)"
+        ),
+    ] = Path("imported-policies.yaml"),
+    overwrite: Annotated[bool, typer.Option(help="Overwrite an existing output file")] = False,
+) -> None:
+    """Import an existing (already-deployed) policies.json into an editable input file.
+
+    Give an explicit path, or --target to read from a standard location (see
+    `ffpolicy discover` to find what's installed on this system). With
+    neither, auto-detects: succeeds only if exactly one standard location has
+    a policies.json.
+    """
+    if input_file is not None and target is not None:
+        raise typer.BadParameter("Provide either a path or --target, not both")
+
+    if input_file is not None:
+        source = input_file
+    elif target is not None:
+        source = resolve_export_path(target, custom_path)
+    else:
+        found = discover_installed_policies()
+        if not found:
+            raise typer.BadParameter(
+                "No existing policies.json found at a standard location; pass a path or --target"
+            )
+        if len(found) > 1:
+            locations = ", ".join(f"{t.value} ({p})" for t, p in found)
+            raise typer.BadParameter(
+                f"Multiple existing policies.json found ({locations}) - pass --target to pick one"
+            )
+        _, source = found[0]
+
+    try:
+        document = import_policies_json(source)
+    except ExportError as exc:
+        typer.echo(str(exc), err=True)
+        raise typer.Exit(code=1) from exc
+
+    if output.exists() and not overwrite:
+        typer.echo(f"{output} already exists (pass --overwrite to replace it)", err=True)
+        raise typer.Exit(code=1)
+
+    is_yaml = output.suffix.lower() in (".yaml", ".yml")
+    text = (
+        yaml.safe_dump(document.values, sort_keys=True)
+        if is_yaml
+        else json.dumps(document.values, indent=2, sort_keys=True) + "\n"
+    )
+
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(text, encoding="utf-8")
+    count = len(document.values)
+    typer.echo(f"Imported {count} polic{'y' if count == 1 else 'ies'} from {source} to {output}")
 
 
 @app.command()

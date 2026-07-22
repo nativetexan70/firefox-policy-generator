@@ -99,3 +99,26 @@ def target_requires_privileges(target: ExportTarget) -> bool:
         ExportTarget.DISTRIBUTION,
         ExportTarget.LINUX_FLATPAK_USER,
     )
+
+
+def discover_installed_policies() -> list[tuple[ExportTarget, Path]]:
+    """Find policies.json files already present at standard system locations.
+
+    Checks every target's default location except `CUSTOM` (no fixed path)
+    and `DISTRIBUTION` (relative to the current working directory, not a
+    real install location). Several targets share a path (e.g. `LINUX_SNAP`
+    and `SYSTEM_LINUX`), so each existing path is reported once, under the
+    first target that resolves to it.
+    """
+    found: list[tuple[ExportTarget, Path]] = []
+    seen: set[Path] = set()
+    for target in ExportTarget:
+        if target in (ExportTarget.CUSTOM, ExportTarget.DISTRIBUTION):
+            continue
+        path = resolve_export_path(target)
+        if path in seen:
+            continue
+        seen.add(path)
+        if path.is_file():
+            found.append((target, path))
+    return found

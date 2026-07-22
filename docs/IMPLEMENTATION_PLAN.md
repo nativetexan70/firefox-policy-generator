@@ -368,6 +368,11 @@ expressed in `policies.json` and need manual/procedural follow-up.
    `distribution/`, or a custom path - via `ffpolicy export --target`, with
    `--elevate` to retry a denied write via pkexec/sudo for the root-owned
    locations; the GUI only offers "save as" today.)
+5. **Import an existing deployment:** `ffpolicy discover` lists which
+   standard locations currently have a policies.json on this machine;
+   `ffpolicy import --target <found target>` (or an explicit path) turns it
+   back into an editable YAML/JSON input file, for re-tuning and re-exporting
+   an already-deployed policy set. Not yet exposed in the GUI.
 
 ### 4.6 Live preview & highlighting
 
