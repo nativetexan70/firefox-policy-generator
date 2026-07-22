@@ -2,6 +2,144 @@
   "source_version": "bundled-2026.1-verified",
   "fetched_at": "2026-07-22T00:00:00Z",
   "policies": {
+    "AIControls": {
+      "name": "AIControls",
+      "category": "AI Controls",
+      "description": "Controls access to AI features: Translations, PDF alt text generation, smart tab groups, display summaries in link previews, AI chatbot in the sidebar, and smart windows. The Default value applies to all AI features unless overridden by a specific feature.",
+      "min_firefox_version": 150,
+      "root_field": {
+        "key": "AIControls",
+        "type": "object",
+        "children": [
+          {
+            "key": "Default",
+            "type": "object",
+            "children": [
+              {
+                "key": "Value",
+                "type": "enum",
+                "enum_values": [
+                  "available",
+                  "blocked"
+                ]
+              },
+              {
+                "key": "Locked",
+                "type": "boolean"
+              }
+            ]
+          },
+          {
+            "key": "Translations",
+            "type": "object",
+            "children": [
+              {
+                "key": "Value",
+                "type": "enum",
+                "enum_values": [
+                  "available",
+                  "blocked"
+                ]
+              },
+              {
+                "key": "Locked",
+                "type": "boolean"
+              }
+            ]
+          },
+          {
+            "key": "PDFAltText",
+            "type": "object",
+            "children": [
+              {
+                "key": "Value",
+                "type": "enum",
+                "enum_values": [
+                  "available",
+                  "blocked"
+                ]
+              },
+              {
+                "key": "Locked",
+                "type": "boolean"
+              }
+            ]
+          },
+          {
+            "key": "SmartTabGroups",
+            "type": "object",
+            "children": [
+              {
+                "key": "Value",
+                "type": "enum",
+                "enum_values": [
+                  "available",
+                  "blocked"
+                ]
+              },
+              {
+                "key": "Locked",
+                "type": "boolean"
+              }
+            ]
+          },
+          {
+            "key": "LinkPreviewKeyPoints",
+            "type": "object",
+            "children": [
+              {
+                "key": "Value",
+                "type": "enum",
+                "enum_values": [
+                  "available",
+                  "blocked"
+                ]
+              },
+              {
+                "key": "Locked",
+                "type": "boolean"
+              }
+            ]
+          },
+          {
+            "key": "SidebarChatbot",
+            "type": "object",
+            "children": [
+              {
+                "key": "Value",
+                "type": "enum",
+                "enum_values": [
+                  "available",
+                  "blocked"
+                ]
+              },
+              {
+                "key": "Locked",
+                "type": "boolean"
+              }
+            ]
+          },
+          {
+            "key": "SmartWindow",
+            "type": "object",
+            "children": [
+              {
+                "key": "Value",
+                "type": "enum",
+                "enum_values": [
+                  "available",
+                  "blocked"
+                ]
+              },
+              {
+                "key": "Locked",
+                "type": "boolean"
+              }
+            ]
+          }
+        ]
+      }
+    },
     "BlockAboutConfig": {
       "name": "BlockAboutConfig",
       "category": "Security",
@@ -345,6 +483,42 @@
           },
           {
             "key": "Snippets",
+            "type": "boolean"
+          },
+          {
+            "key": "Locked",
+            "type": "boolean"
+          }
+        ]
+      }
+    },
+    "GenerativeAI": {
+      "name": "GenerativeAI",
+      "category": "AI Controls",
+      "description": "Configure generative AI features (chatbot sidebar, link-preview key points, smart tab groups, smart window). Set Enabled to false to turn off all generative AI features at once; set Locked to true to prevent users from changing these settings themselves.",
+      "min_firefox_version": 148,
+      "root_field": {
+        "key": "GenerativeAI",
+        "type": "object",
+        "children": [
+          {
+            "key": "Enabled",
+            "type": "boolean"
+          },
+          {
+            "key": "Chatbot",
+            "type": "boolean"
+          },
+          {
+            "key": "LinkPreviews",
+            "type": "boolean"
+          },
+          {
+            "key": "TabGroups",
+            "type": "boolean"
+          },
+          {
+            "key": "SmartWindow",
             "type": "boolean"
           },
           {
