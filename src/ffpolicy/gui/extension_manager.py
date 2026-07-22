@@ -86,12 +86,18 @@ class ExtensionManager(QWidget):
         self._table.setHorizontalHeaderLabels(["GUID", "Mode", "Install URL", ""])
         self._table.verticalHeader().setVisible(False)
         self._table.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        # Interactive (not ResizeToContents) for the widget-bearing columns: Qt's
+        # ResizeToContents measures header text at setup time and does not reliably
+        # re-measure QComboBox/QPushButton cell widgets added later via
+        # setCellWidget(), leaving those columns pinned to a sliver.
         header = self._table.horizontalHeader()
         header.setSectionResizeMode(0, QHeaderView.ResizeMode.Interactive)
-        header.setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
+        header.setSectionResizeMode(1, QHeaderView.ResizeMode.Interactive)
         header.setSectionResizeMode(2, QHeaderView.ResizeMode.Stretch)
-        header.setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)
+        header.setSectionResizeMode(3, QHeaderView.ResizeMode.Interactive)
         self._table.setColumnWidth(0, 220)
+        self._table.setColumnWidth(1, 180)  # fits "normal_installed", the longest mode value
+        self._table.setColumnWidth(3, 90)
         layout.addWidget(self._table, 1)
 
         self._refresh_table()
