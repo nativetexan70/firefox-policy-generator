@@ -1,8 +1,10 @@
-from unittest.mock import patch
+import json
+from unittest.mock import MagicMock, patch
 
 import pytest
-from PySide6.QtWidgets import QMessageBox
+from PySide6.QtWidgets import QDialog, QMessageBox
 
+from ffpolicy.core.paths import ExportTarget
 from ffpolicy.core.presets import load_preset
 from ffpolicy.fetchers.schema_sync import load_bundled_schema
 from ffpolicy.gui.extension_manager import ExtensionManager
@@ -153,3 +155,69 @@ def test_preset_details_dialog_opens_without_error(qtbot, main_window):
     qtbot.addWidget(dialog)
 
     assert dialog.windowTitle().startswith("DISA STIG - Mozilla Firefox")
+
+
+def _fake_dialog(**attrs):
+    dialog = MagicMock()
+    dialog.exec.return_value = QDialog.DialogCode.Accepted
+    for name, value in attrs.items():
+        setattr(dialog, name, value)
+    return dialog
+
+
+def test_export_to_standard_target_writes_resolved_path(qtbot, main_window, tmp_path):
+    main_window.document.set_policy("DisableTelemetry", True)
+    custom = tmp_path / "custom-export"
+    fake_dialog = _fake_dialog(
+        selected_target=ExportTarget.CUSTOM, custom_path=str(custom), elevate=False
+    )
+
+    with patch("ffpolicy.gui.main_window.ExportTargetDialog", return_value=fake_dialog):
+        main_window._on_export_to_standard_target()
+
+    written = custom / "policies.json"
+    assert written.exists()
+    assert json.loads(written.read_text())["policies"]["DisableTelemetry"] is True
+
+
+def test_export_to_standard_target_cancelled_writes_nothing(qtbot, main_window, tmp_path):
+    fake_dialog = _fake_dialog()
+    fake_dialog.exec.return_value = QDialog.DialogCode.Rejected
+
+    with patch("ffpolicy.gui.main_window.ExportTargetDialog", return_value=fake_dialog):
+        main_window._on_export_to_standard_target()
+
+    assert not list(tmp_path.iterdir())
+
+
+def test_import_existing_loads_document_and_refreshes_preview(qtbot, main_window, tmp_path):
+    source = tmp_path / "policies.json"
+    source.write_text(json.dumps({"policies": {"DisableTelemetry": True}}))
+    fake_dialog = _fake_dialog(selected_path=str(source))
+
+    with patch("ffpolicy.gui.main_window.ImportSourceDialog", return_value=fake_dialog):
+        main_window._on_import_existing()
+
+    assert main_window.document.values == {"DisableTelemetry": True}
+    assert '"DisableTelemetry": true' in main_window.preview.toPlainText()
+
+
+def test_import_existing_cancelled_leaves_document_unchanged(qtbot, main_window):
+    main_window.document.set_policy("DisableTelemetry", True)
+    fake_dialog = _fake_dialog()
+    fake_dialog.exec.return_value = QDialog.DialogCode.Rejected
+
+    with patch("ffpolicy.gui.main_window.ImportSourceDialog", return_value=fake_dialog):
+        main_window._on_import_existing()
+
+    assert main_window.document.values == {"DisableTelemetry": True}
+
+
+def test_import_existing_no_selection_shows_warning(qtbot, main_window):
+    fake_dialog = _fake_dialog(selected_path=None)
+
+    with patch("ffpolicy.gui.main_window.ImportSourceDialog", return_value=fake_dialog):
+        with patch.object(QMessageBox, "warning") as mock_warning:
+            main_window._on_import_existing()
+
+    mock_warning.assert_called_once()

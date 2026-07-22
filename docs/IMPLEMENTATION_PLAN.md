@@ -360,19 +360,23 @@ expressed in `policies.json` and need manual/procedural follow-up.
 3. **Apply a compliance preset:** Presets menu → pick a profile → confirm →
    baseline applied, manual/procedural items called out → hand-tune anything
    organization-specific (e.g. a pop-up allowlist) on top.
-4. **Export:** click "Export policies.json" in the footer bar → file dialog.
-   (The CLI additionally supports the standard Linux target locations -
-   `/etc/firefox/policies/`, the per-distro `.../distribution/` install
-   directories, the Firefox snap (same `/etc` path), the Flatpak
-   system-config extension mount point (system-wide and per-user),
-   `distribution/`, or a custom path - via `ffpolicy export --target`, with
-   `--elevate` to retry a denied write via pkexec/sudo for the root-owned
-   locations; the GUI only offers "save as" today.)
-5. **Import an existing deployment:** `ffpolicy discover` lists which
-   standard locations currently have a policies.json on this machine;
-   `ffpolicy import --target <found target>` (or an explicit path) turns it
-   back into an editable YAML/JSON input file, for re-tuning and re-exporting
-   an already-deployed policy set. Not yet exposed in the GUI.
+4. **Export:** click "Export policies.json" in the footer bar for a quick
+   file-dialog "save as", or File menu → "Export to standard location..." for
+   the same standard target locations the CLI supports - `/etc/firefox/
+   policies/`, the per-distro `.../distribution/` install directories, the
+   Firefox snap (same `/etc` path), the Flatpak system-config extension mount
+   point (system-wide and per-user), `distribution/`, or a custom path (`gui/
+   export_target_dialog.py`, mirroring `ffpolicy export --target`). The
+   resolved path and whether it's root-owned update live as the target
+   changes; an "elevate" checkbox opts into a pkexec/sudo retry on write
+   failure, same as the CLI's `--elevate`.
+5. **Import an existing deployment:** File menu → "Import existing
+   policies.json..." (`gui/import_source_dialog.py`, mirroring `ffpolicy
+   discover` + `ffpolicy import`) lists policies.json files already found at
+   standard locations on this machine, or browse to an explicit path; picking
+   one replaces the current document and refreshes the preview/validation, for
+   re-tuning and re-exporting a policy set that's already deployed. The CLI
+   offers the same via `ffpolicy discover` / `ffpolicy import --target ...`.
 
 ### 4.6 Live preview & highlighting
 

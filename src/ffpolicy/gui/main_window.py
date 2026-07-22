@@ -9,6 +9,7 @@ from PySide6.QtCore import Qt, QTimer
 from PySide6.QtGui import QGuiApplication
 from PySide6.QtWidgets import (
     QApplication,
+    QDialog,
     QFileDialog,
     QHBoxLayout,
     QLabel,
@@ -22,12 +23,16 @@ from PySide6.QtWidgets import (
 
 from ffpolicy.core.errors import ExportError
 from ffpolicy.core.generator import export_policies_json
+from ffpolicy.core.importer import import_policies_json
+from ffpolicy.core.paths import resolve_export_path
 from ffpolicy.core.presets import Preset, apply_preset, load_bundled_presets
 from ffpolicy.core.validator import validate_document
 from ffpolicy.fetchers.schema_sync import sync_schema
 from ffpolicy.gui.category_tree import CategoryTree
+from ffpolicy.gui.export_target_dialog import ExportTargetDialog
 from ffpolicy.gui.extension_manager import ExtensionManager
 from ffpolicy.gui.form_builder import PolicyForm
+from ffpolicy.gui.import_source_dialog import ImportSourceDialog
 from ffpolicy.gui.json_preview import JsonPreview
 from ffpolicy.gui.preset_details import PresetDetailsDialog
 from ffpolicy.gui.style import APP_STYLESHEET
@@ -147,6 +152,15 @@ class MainWindow(QMainWindow):
         # references - PySide6 can garbage-collect the wrapper object even
         # though Qt's C++ side still parents it, leaving a "deleted" QMenu.
         self._menu_refs: list[QWidget] = []
+
+        file_menu = self.menuBar().addMenu("&File")
+        self._menu_refs.append(file_menu)
+
+        import_action = file_menu.addAction("Import existing policies.json...")
+        import_action.triggered.connect(self._on_import_existing)
+
+        export_action = file_menu.addAction("Export to standard location...")
+        export_action.triggered.connect(self._on_export_to_standard_target)
 
         presets_menu = self.menuBar().addMenu("&Presets")
         self._menu_refs.append(presets_menu)
@@ -280,6 +294,56 @@ class MainWindow(QMainWindow):
             QMessageBox.critical(self, "Export failed", str(exc))
             return
         self.statusBar().showMessage(f"Exported to {path}", 5000)
+
+    def _on_export_to_standard_target(self) -> None:
+        dialog = ExportTargetDialog(self)
+        if dialog.exec() != QDialog.DialogCode.Accepted:
+            return
+
+        try:
+            resolved = resolve_export_path(dialog.selected_target, dialog.custom_path)
+            written = export_policies_json(
+                self.document,
+                resolved,
+                overwrite=True,
+                allow_privilege_escalation=dialog.elevate,
+            )
+        except (ExportError, ValueError) as exc:
+            QMessageBox.critical(self, "Export failed", str(exc))
+            return
+
+        self.statusBar().showMessage(f"Exported to {written}", 5000)
+
+    def _on_import_existing(self) -> None:
+        dialog = ImportSourceDialog(self)
+        if dialog.exec() != QDialog.DialogCode.Accepted:
+            return
+
+        source = dialog.selected_path
+        if not source:
+            QMessageBox.warning(self, "Import failed", "No file selected.")
+            return
+
+        try:
+            document = import_policies_json(source)
+        except ExportError as exc:
+            QMessageBox.critical(self, "Import failed", str(exc))
+            return
+
+        self.document = document
+        self._current_policy_name = None
+        self._clear_editor()
+        placeholder = QLabel("Policy set imported. Select a policy from the left to edit it.")
+        placeholder.setWordWrap(True)
+        placeholder.setStyleSheet("color: #6b7480; padding-top: 4px;")
+        self._editor_layout.addWidget(placeholder)
+        self._editor_layout.addStretch(1)
+        self._refresh_preview_and_validation()
+
+        count = len(document.values)
+        self.statusBar().showMessage(
+            f"Imported {count} polic{'y' if count == 1 else 'ies'} from {source}", 5000
+        )
 
 
 def run_gui() -> int:
