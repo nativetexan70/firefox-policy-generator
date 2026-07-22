@@ -61,6 +61,26 @@ python -m ffpolicy export my-policies.yaml --target linux_lib64_distribution --e
 Without `--elevate`, a permission error is reported with a hint to pass it or
 choose a path you own.
 
+### Importing an existing policies.json
+
+If Firefox is already deployed on this machine, `discover` lists which
+standard locations (the same set `export --target` writes to) currently have
+a policies.json, and `import` turns one back into an editable input file:
+
+```bash
+python -m ffpolicy discover
+# system_linux  ->  /etc/firefox/policies/policies.json
+
+python -m ffpolicy import --target system_linux -o my-policies.yaml
+python -m ffpolicy import /path/to/policies.json -o my-policies.yaml   # explicit path works too
+```
+
+With neither a path nor `--target`, `import` auto-detects: it succeeds only
+if exactly one standard location has a policies.json, and otherwise lists the
+candidates so you can pick one with `--target`. The output extension
+(`.yaml`/`.yml` vs `.json`) controls the format written; `--overwrite` allows
+replacing an existing output file.
+
 Input files are YAML or JSON, either a bare `policy-name: value` mapping or a
 `{firefox_version, policies}` wrapper - see `tests/fixtures/sample_input.yaml`.
 Pass `--offline` to skip the live Mozilla schema sync and use the bundled fallback.

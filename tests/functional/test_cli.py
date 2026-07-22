@@ -88,6 +88,72 @@ def test_export_to_custom_target(valid_input, tmp_path):
     assert (custom / "policies.json").exists()
 
 
+def test_import_from_explicit_path(tmp_path):
+    source = tmp_path / "existing-policies.json"
+    source.write_text(json.dumps({"policies": {"DisableTelemetry": True}}))
+    output = tmp_path / "imported.yaml"
+
+    result = runner.invoke(app, ["import", str(source), "-o", str(output)])
+
+    assert result.exit_code == 0, result.stdout
+    assert "DisableTelemetry: true" in output.read_text()
+
+
+def test_import_to_json_output(tmp_path):
+    source = tmp_path / "existing-policies.json"
+    source.write_text(json.dumps({"policies": {"DisableTelemetry": True}}))
+    output = tmp_path / "imported.json"
+
+    result = runner.invoke(app, ["import", str(source), "-o", str(output)])
+
+    assert result.exit_code == 0, result.stdout
+    assert json.loads(output.read_text()) == {"DisableTelemetry": True}
+
+
+def test_import_refuses_to_overwrite_without_flag(tmp_path):
+    source = tmp_path / "existing-policies.json"
+    source.write_text(json.dumps({"policies": {"DisableTelemetry": True}}))
+    output = tmp_path / "imported.yaml"
+    output.write_text("stale: true\n")
+
+    result = runner.invoke(app, ["import", str(source), "-o", str(output)])
+
+    assert result.exit_code == 1
+    assert "already exists" in result.output
+
+
+def test_import_path_and_target_are_mutually_exclusive(tmp_path):
+    source = tmp_path / "existing-policies.json"
+    source.write_text(json.dumps({"policies": {}}))
+
+    result = runner.invoke(
+        app, ["import", str(source), "--target", "system_linux", "-o", str(tmp_path / "out.yaml")]
+    )
+
+    assert result.exit_code != 0
+
+
+def test_discover_reports_no_policies_found(monkeypatch):
+    monkeypatch.setattr("ffpolicy.cli.discover_installed_policies", lambda: [])
+    result = runner.invoke(app, ["discover"])
+    assert result.exit_code == 0
+    assert "No existing policies.json found" in result.stdout
+
+
+def test_discover_lists_found_locations(monkeypatch, tmp_path):
+    from ffpolicy.core.paths import ExportTarget
+
+    found_path = tmp_path / "policies.json"
+    monkeypatch.setattr(
+        "ffpolicy.cli.discover_installed_policies",
+        lambda: [(ExportTarget.SYSTEM_LINUX, found_path)],
+    )
+    result = runner.invoke(app, ["discover"])
+    assert result.exit_code == 0
+    assert "system_linux" in result.stdout
+    assert str(found_path) in result.stdout
+
+
 def test_preview_prints_json_without_writing(valid_input):
     result = runner.invoke(app, ["preview", str(valid_input)])
     assert result.exit_code == 0
