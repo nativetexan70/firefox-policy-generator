@@ -86,6 +86,10 @@ widgets, object -> recurses into a group box, array -> add/remove rows). A wildc
 object child (`key == "*"`, e.g. `ExtensionSettings`) falls back to a raw JSON editor
 instead of trying to synthesize a fixed-field form - `ExtensionSettings` itself gets a
 dedicated `gui/extension_manager.py` (AMO search + table) instead of the generic form.
+Extension search degrades gracefully rather than dead-ending: results are re-ranked by
+name relevance (`fetchers/amo_client.rank_by_name_relevance`), and an always-visible
+manual-entry row (GUID/mode/install URL) covers rate-limiting, a restricted network, or
+an add-on that simply isn't on AMO.
 
 **Validation** (`core/validator.validate_document`) runs up to three independent layers
 and returns a flat `list[ValidationIssue]`: JSON-Schema validation (when a raw JSON
