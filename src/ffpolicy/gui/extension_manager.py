@@ -36,7 +36,7 @@ class ExtensionManager(QWidget):
 
         search_row = QHBoxLayout()
         self._search_box = QLineEdit()
-        self._search_box.setPlaceholderText("Search AMO for an extension...")
+        self._search_box.setPlaceholderText("Search AMO by extension name...")
         self._search_box.returnPressed.connect(self._on_search)
         search_button = QPushButton("Search")
         search_button.clicked.connect(self._on_search)

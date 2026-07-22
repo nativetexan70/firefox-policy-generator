@@ -7,8 +7,10 @@ from ffpolicy.fetchers.amo_client import (
     AmoRateLimitedError,
     get_addon_detail,
     parse_addon_slug_from_url,
+    rank_by_name_relevance,
     search_extensions,
 )
+from ffpolicy.models.amo import AmoAddon
 
 ADDON_JSON = {
     "guid": "uBlock0@raymondhill.net",
@@ -71,3 +73,65 @@ def test_search_extensions_uses_cache_on_second_call():
     search_extensions("ublock")  # should hit cache, not require a second registered response
 
     assert len(responses.calls) == 1
+
+
+def _addon(name: str, guid: str) -> AmoAddon:
+    return AmoAddon(
+        guid=guid,
+        name=name,
+        current_version={"file": {"url": f"https://example.com/{guid}.xpi"}},
+    )
+
+
+def test_rank_by_name_relevance_prefers_exact_and_prefix_matches():
+    unrelated = _addon("Tab Manager Plus", "tab-manager@example.com")
+    contains = _addon("My uBlock Origin Clone", "companion@example.com")
+    prefix = _addon("uBlock Origin Lite", "lite@example.com")
+    exact = _addon("uBlock Origin", "ublock@example.com")
+
+    ranked = rank_by_name_relevance([unrelated, contains, prefix, exact], "uBlock Origin")
+
+    assert [addon.guid for addon in ranked] == [
+        "ublock@example.com",
+        "lite@example.com",
+        "companion@example.com",
+        "tab-manager@example.com",
+    ]
+
+
+def test_rank_by_name_relevance_is_case_insensitive_and_stable_on_ties():
+    first = _addon("Password Manager", "a@example.com")
+    second = _addon("password vault", "b@example.com")
+
+    ranked = rank_by_name_relevance([first, second], "password")
+
+    # Neither is an exact/prefix match to "password" alone in a way that
+    # distinguishes them beyond "contains" - original order is preserved.
+    assert [addon.guid for addon in ranked] == ["a@example.com", "b@example.com"]
+
+
+@responses.activate
+def test_search_extensions_reorders_results_by_name_relevance():
+    unrelated_first = {
+        "guid": "unrelated@example.com",
+        "name": "Totally Different Addon",
+        "current_version": {"file": {"url": "https://example.com/unrelated.xpi"}},
+    }
+    exact_match_second = {
+        "guid": "ublock@example.com",
+        "name": "uBlock Origin",
+        "current_version": {"file": {"url": "https://example.com/ublock.xpi"}},
+    }
+    responses.add(
+        responses.GET,
+        SEARCH_URL,
+        json={"count": 2, "results": [unrelated_first, exact_match_second]},
+        status=200,
+    )
+
+    result = search_extensions("uBlock Origin")
+
+    assert [addon.guid for addon in result.results] == [
+        "ublock@example.com",
+        "unrelated@example.com",
+    ]
