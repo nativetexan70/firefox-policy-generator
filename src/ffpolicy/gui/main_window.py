@@ -28,6 +28,7 @@ from ffpolicy.gui.category_tree import CategoryTree
 from ffpolicy.gui.extension_manager import ExtensionManager
 from ffpolicy.gui.form_builder import PolicyForm
 from ffpolicy.gui.json_preview import JsonPreview
+from ffpolicy.gui.style import APP_STYLESHEET
 from ffpolicy.gui.validation_panel import ValidationPanel
 from ffpolicy.models.policy_document import PolicyDocument
 from ffpolicy.models.policy_schema import PolicySchema
@@ -42,6 +43,22 @@ _WINDOW_HEIGHT = 900
 _SPLITTER_SIZES = [280, 640, 680]  # tree | editor | preview, sums to _WINDOW_WIDTH
 
 
+def _panel(title: str, content: QWidget) -> QWidget:
+    """Wrap `content` with an uppercase section header, so the three splitter
+    panes read as clearly labeled columns instead of unlabeled whitespace.
+    """
+    panel = QWidget()
+    layout = QVBoxLayout(panel)
+    layout.setContentsMargins(0, 0, 0, 0)
+    layout.setSpacing(6)
+
+    header = QLabel(title)
+    header.setProperty("role", "sectionHeader")
+    layout.addWidget(header)
+    layout.addWidget(content, 1)
+    return panel
+
+
 class MainWindow(QMainWindow):
     def __init__(
         self,
@@ -52,6 +69,7 @@ class MainWindow(QMainWindow):
         super().__init__(parent)
         self.setWindowTitle("Firefox Policy Generator")
         self.setFixedSize(_WINDOW_WIDTH, _WINDOW_HEIGHT)
+        self.setStyleSheet(APP_STYLESHEET)
         self._center_on_screen()
 
         self.document = PolicyDocument()
@@ -65,33 +83,52 @@ class MainWindow(QMainWindow):
         self._debounce.timeout.connect(self._refresh_preview_and_validation)
 
         splitter = QSplitter(Qt.Orientation.Horizontal)
+        splitter.setChildrenCollapsible(False)
+        splitter.setHandleWidth(10)
 
         self.tree = CategoryTree(self.schema)
         self.tree.policySelected.connect(self._on_policy_selected)
-        splitter.addWidget(self.tree)
+        splitter.addWidget(_panel("Categories", self.tree))
 
         self._editor_container = QWidget()
         self._editor_layout = QVBoxLayout(self._editor_container)
-        self._editor_layout.addWidget(QLabel("Select a policy from the left"))
-        splitter.addWidget(self._editor_container)
+        self._editor_layout.setContentsMargins(0, 0, 0, 0)
+        self._editor_placeholder = QLabel("Select a policy from the left to configure it.")
+        self._editor_placeholder.setWordWrap(True)
+        self._editor_placeholder.setStyleSheet("color: #6b7480; padding-top: 4px;")
+        self._editor_layout.addWidget(self._editor_placeholder)
+        self._editor_layout.addStretch(1)
+        splitter.addWidget(_panel("Policy Editor", self._editor_container))
 
         self.preview = JsonPreview()
-        splitter.addWidget(self.preview)
+        splitter.addWidget(_panel("JSON Preview", self.preview))
         splitter.setSizes(_SPLITTER_SIZES)
 
         central = QWidget()
         central_layout = QVBoxLayout(central)
-        central_layout.addWidget(splitter)
+        central_layout.setContentsMargins(0, 0, 0, 0)
+        central_layout.setSpacing(0)
+
+        content = QWidget()
+        content_layout = QVBoxLayout(content)
+        content_layout.setContentsMargins(16, 16, 16, 12)
+        content_layout.addWidget(splitter)
+        central_layout.addWidget(content, 1)
+
+        footer = QWidget()
+        footer.setObjectName("footerBar")
+        footer_layout = QHBoxLayout(footer)
+        footer_layout.setContentsMargins(16, 12, 16, 12)
 
         self.validation_panel = ValidationPanel()
-        central_layout.addWidget(self.validation_panel)
+        footer_layout.addWidget(self.validation_panel, 1)
 
-        export_row = QHBoxLayout()
-        export_row.addStretch()
         export_button = QPushButton("Export policies.json")
+        export_button.setProperty("role", "primary")
         export_button.clicked.connect(self._on_export)
-        export_row.addWidget(export_button)
-        central_layout.addLayout(export_row)
+        footer_layout.addWidget(export_button, 0, Qt.AlignmentFlag.AlignBottom)
+
+        central_layout.addWidget(footer, 0)
 
         self.setCentralWidget(central)
         self.statusBar().showMessage(
@@ -126,11 +163,11 @@ class MainWindow(QMainWindow):
         if name == "ExtensionSettings":
             manager = ExtensionManager(self.document.values.get(name))
             manager.settingsChanged.connect(lambda value: self._on_value_changed(name, value))
-            self._editor_layout.addWidget(manager)
+            self._editor_layout.addWidget(manager, 1)
         else:
             form = PolicyForm(definition, self.document.values.get(name))
             form.valueChanged.connect(self._on_value_changed)
-            self._editor_layout.addWidget(form)
+            self._editor_layout.addWidget(form, 1)
 
     def _on_value_changed(self, name: str, value: Any) -> None:
         self.document.set_policy(name, value)

@@ -239,6 +239,10 @@ def _labeled(label: str, editor: FieldEditor) -> QWidget:
         box_layout.addWidget(editor)
         return box
 
+    if isinstance(editor, BoolField):
+        # The checkbox already renders its own label text; a row label would duplicate it.
+        return editor
+
     row = QWidget()
     row_layout = QHBoxLayout(row)
     row_layout.setContentsMargins(0, 0, 0, 0)

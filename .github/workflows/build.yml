@@ -4,6 +4,12 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version string for the AppImage filename"
+        required: false
+        default: "dev"
 
 jobs:
   test:
@@ -37,7 +43,7 @@ jobs:
   build-appimage:
     needs: test
     runs-on: ubuntu-22.04
-    if: startsWith(github.ref, 'refs/tags/')
+    if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -53,7 +59,9 @@ jobs:
           wget -q https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage -O /usr/local/bin/appimagetool
           chmod +x /usr/local/bin/appimagetool
       - name: Build AppImage
-        run: bash src/ffpolicy/packager/build_appimage.sh "${{ github.ref_name }}"
+        run: >-
+          bash src/ffpolicy/packager/build_appimage.sh
+          "${{ github.event_name == 'workflow_dispatch' && inputs.version || github.ref_name }}"
       - uses: actions/upload-artifact@v4
         with:
           name: ffpolicy-appimage
