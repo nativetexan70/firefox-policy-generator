@@ -57,7 +57,8 @@ src/ffpolicy/
 │               # schema_sync (Mozilla policy-templates -> PolicySchema),
 │               # amo_client (addons.mozilla.org search/detail).
 ├── gui/        # PySide6 UI - depends only on core/ + models/, never the reverse.
-├── resources/  # Bundled schema_backup.json + categories.yaml (offline fallback).
+├── resources/  # Bundled schema_backup.json + categories.yaml (offline fallback),
+│               # presets/*.yaml (compliance baselines, e.g. disa_stig.yaml).
 ├── packager/   # ffpolicy.spec (PyInstaller), build_appimage.sh, .desktop, icon.
 ├── cli.py      # Typer CLI: validate / generate / export / preview.
 └── __main__.py # Dispatches to cli.py when argv has args, else the GUI.
@@ -92,6 +93,16 @@ schema is supplied), `ExtensionSettings` required-field rules (`force_installed`
 `normal_installed` require `install_url`; `allowed`/`blocked` must not set it), and
 Firefox min/max version compatibility warnings against a `PolicySchema`. GUI and CLI both
 consume the same issue list.
+
+**Presets** (`core/presets.py`, `resources/presets/*.yaml`): a preset bundles a pre-merged
+`policy-name -> value` baseline plus `rules` metadata (source rule id/severity/title, and
+which top-level policy it maps to, or `policy: null` for items that can't be expressed in
+policies.json at all). `apply_preset()` overlays a preset's values onto a `PolicyDocument`
+one top-level key at a time; CLI (`--preset <id>` on validate/generate/export/preview, plus
+a `presets` list command) and GUI (menu bar -> Presets) both apply a preset as a baseline
+that an input file or further manual edits then override. See `docs/DISA_STIG.md` for the
+bundled DISA STIG preset and why some source values (e.g. `FirefoxHome.Locked` casing) were
+corrected against Firefox's actual schema rather than copied verbatim from the STIG text.
 
 ## Testing conventions
 

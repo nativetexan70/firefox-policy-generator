@@ -2,24 +2,84 @@
   "source_version": "bundled-2026.1-verified",
   "fetched_at": "2026-07-22T00:00:00Z",
   "policies": {
-    "DisableTelemetry": {
-      "name": "DisableTelemetry",
-      "category": "Privacy & Network",
-      "description": "Disable Telemetry data collection.",
+    "BlockAboutConfig": {
+      "name": "BlockAboutConfig",
+      "category": "Security",
+      "description": "Block access to about:config.",
       "min_firefox_version": 60,
       "root_field": {
-        "key": "DisableTelemetry",
+        "key": "BlockAboutConfig",
         "type": "boolean",
         "default": false
       }
     },
-    "DisablePocket": {
-      "name": "DisablePocket",
+    "DNSOverHTTPS": {
+      "name": "DNSOverHTTPS",
       "category": "Privacy & Network",
-      "description": "Disable the Pocket integration.",
+      "description": "Configure DNS over HTTPS.",
+      "min_firefox_version": 63,
+      "root_field": {
+        "key": "DNSOverHTTPS",
+        "type": "object",
+        "children": [
+          {
+            "key": "Enabled",
+            "type": "boolean"
+          },
+          {
+            "key": "ProviderURL",
+            "type": "url"
+          },
+          {
+            "key": "Locked",
+            "type": "boolean"
+          },
+          {
+            "key": "ExcludedDomains",
+            "type": "array",
+            "children": [
+              {
+                "key": "[]",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "key": "Fallback",
+            "type": "boolean"
+          }
+        ]
+      }
+    },
+    "DisableAppUpdate": {
+      "name": "DisableAppUpdate",
+      "category": "Updates",
+      "description": "Disable Firefox application updates.",
       "min_firefox_version": 60,
       "root_field": {
-        "key": "DisablePocket",
+        "key": "DisableAppUpdate",
+        "type": "boolean",
+        "default": false
+      }
+    },
+    "DisableDeveloperTools": {
+      "name": "DisableDeveloperTools",
+      "category": "Security",
+      "description": "Disable access to the browser developer tools.",
+      "min_firefox_version": 60,
+      "root_field": {
+        "key": "DisableDeveloperTools",
+        "type": "boolean",
+        "default": false
+      }
+    },
+    "DisableFeedbackCommands": {
+      "name": "DisableFeedbackCommands",
+      "category": "UI/Bookmarks",
+      "description": "Remove the \"Submit Feedback\" menu commands.",
+      "min_firefox_version": 60,
+      "root_field": {
+        "key": "DisableFeedbackCommands",
         "type": "boolean",
         "default": false
       }
@@ -35,33 +95,91 @@
         "default": false
       }
     },
-    "DisableAppUpdate": {
-      "name": "DisableAppUpdate",
-      "category": "Updates",
-      "description": "Disable Firefox application updates.",
+    "DisableFirefoxStudies": {
+      "name": "DisableFirefoxStudies",
+      "category": "Privacy & Network",
+      "description": "Disable Firefox Studies (Normandy/Shield experiments).",
       "min_firefox_version": 60,
       "root_field": {
-        "key": "DisableAppUpdate",
+        "key": "DisableFirefoxStudies",
         "type": "boolean",
         "default": false
       }
     },
-    "Homepage": {
-      "name": "Homepage",
-      "category": "UI/Bookmarks",
-      "description": "Configure the default homepage.",
+    "DisableForgetButton": {
+      "name": "DisableForgetButton",
+      "category": "Privacy & Network",
+      "description": "Disable the \"Forget\" button used to quickly clear recent history.",
       "min_firefox_version": 60,
       "root_field": {
-        "key": "Homepage",
+        "key": "DisableForgetButton",
+        "type": "boolean",
+        "default": false
+      }
+    },
+    "DisableFormHistory": {
+      "name": "DisableFormHistory",
+      "category": "Privacy & Network",
+      "description": "Disable saving of form and search bar entry history.",
+      "min_firefox_version": 60,
+      "root_field": {
+        "key": "DisableFormHistory",
+        "type": "boolean",
+        "default": false
+      }
+    },
+    "DisablePocket": {
+      "name": "DisablePocket",
+      "category": "Privacy & Network",
+      "description": "Disable the Pocket integration.",
+      "min_firefox_version": 60,
+      "root_field": {
+        "key": "DisablePocket",
+        "type": "boolean",
+        "default": false
+      }
+    },
+    "DisablePrivateBrowsing": {
+      "name": "DisablePrivateBrowsing",
+      "category": "Privacy & Network",
+      "description": "Disable private browsing mode.",
+      "min_firefox_version": 60,
+      "root_field": {
+        "key": "DisablePrivateBrowsing",
+        "type": "boolean",
+        "default": false
+      }
+    },
+    "DisableTelemetry": {
+      "name": "DisableTelemetry",
+      "category": "Privacy & Network",
+      "description": "Disable Telemetry data collection.",
+      "min_firefox_version": 60,
+      "root_field": {
+        "key": "DisableTelemetry",
+        "type": "boolean",
+        "default": false
+      }
+    },
+    "DisabledCiphers": {
+      "name": "DisabledCiphers",
+      "category": "Security",
+      "description": "Disable (or explicitly enable) specific TLS cryptographic ciphers.",
+      "min_firefox_version": 76,
+      "root_field": {
+        "key": "DisabledCiphers",
         "type": "object",
         "children": [
-          { "key": "URL", "type": "url", "required": true },
           {
-            "key": "StartPage",
-            "type": "enum",
-            "enum_values": ["none", "homepage", "previous-session", "homepage-locked"]
-          },
-          { "key": "Locked", "type": "boolean", "default": false }
+            "key": "*",
+            "type": "object",
+            "children": [
+              {
+                "key": "*",
+                "type": "boolean"
+              }
+            ]
+          }
         ]
       }
     },
@@ -76,26 +194,76 @@
         "default": false
       }
     },
-    "SSLVersionMin": {
-      "name": "SSLVersionMin",
-      "category": "Security",
-      "description": "Set the minimum allowed TLS/SSL version.",
-      "min_firefox_version": 66,
-      "root_field": {
-        "key": "SSLVersionMin",
-        "type": "enum",
-        "enum_values": ["tls1", "tls1.1", "tls1.2", "tls1.3"]
-      }
-    },
-    "BlockAboutConfig": {
-      "name": "BlockAboutConfig",
-      "category": "Security",
-      "description": "Block access to about:config.",
+    "EnableTrackingProtection": {
+      "name": "EnableTrackingProtection",
+      "category": "Privacy & Network",
+      "description": "Configure tracking protection.",
       "min_firefox_version": 60,
       "root_field": {
-        "key": "BlockAboutConfig",
-        "type": "boolean",
-        "default": false
+        "key": "EnableTrackingProtection",
+        "type": "object",
+        "children": [
+          {
+            "key": "Value",
+            "type": "boolean"
+          },
+          {
+            "key": "Locked",
+            "type": "boolean"
+          },
+          {
+            "key": "Cryptomining",
+            "type": "boolean"
+          },
+          {
+            "key": "Fingerprinting",
+            "type": "boolean"
+          },
+          {
+            "key": "EmailTracking",
+            "type": "boolean"
+          },
+          {
+            "key": "Exceptions",
+            "type": "array",
+            "children": [
+              {
+                "key": "[]",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "key": "Category",
+            "type": "enum",
+            "enum_values": [
+              "strict",
+              "standard"
+            ]
+          }
+        ]
+      }
+    },
+    "EncryptedMediaExtensions": {
+      "name": "EncryptedMediaExtensions",
+      "category": "Security",
+      "description": "Configure whether encrypted media extensions (e.g. Widevine) may be downloaded.",
+      "min_firefox_version": 77,
+      "root_field": {
+        "key": "EncryptedMediaExtensions",
+        "type": "object",
+        "children": [
+          {
+            "key": "Enabled",
+            "type": "boolean",
+            "default": true
+          },
+          {
+            "key": "Locked",
+            "type": "boolean",
+            "default": false
+          }
+        ]
       }
     },
     "ExtensionSettings": {
@@ -122,7 +290,259 @@
                   "normal_installed"
                 ]
               },
-              { "key": "install_url", "type": "url" }
+              {
+                "key": "install_url",
+                "type": "url"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "ExtensionUpdate": {
+      "name": "ExtensionUpdate",
+      "category": "Extensions",
+      "description": "Enable or disable automatic extension updates.",
+      "min_firefox_version": 67,
+      "root_field": {
+        "key": "ExtensionUpdate",
+        "type": "boolean",
+        "default": false
+      }
+    },
+    "FirefoxHome": {
+      "name": "FirefoxHome",
+      "category": "UI/Bookmarks",
+      "description": "Customize the Firefox Home (New Tab) page.",
+      "min_firefox_version": 68,
+      "root_field": {
+        "key": "FirefoxHome",
+        "type": "object",
+        "children": [
+          {
+            "key": "Search",
+            "type": "boolean"
+          },
+          {
+            "key": "TopSites",
+            "type": "boolean"
+          },
+          {
+            "key": "SponsoredTopSites",
+            "type": "boolean"
+          },
+          {
+            "key": "Pocket",
+            "type": "boolean"
+          },
+          {
+            "key": "SponsoredPocket",
+            "type": "boolean"
+          },
+          {
+            "key": "Highlights",
+            "type": "boolean"
+          },
+          {
+            "key": "Snippets",
+            "type": "boolean"
+          },
+          {
+            "key": "Locked",
+            "type": "boolean"
+          }
+        ]
+      }
+    },
+    "Homepage": {
+      "name": "Homepage",
+      "category": "UI/Bookmarks",
+      "description": "Configure the default homepage.",
+      "min_firefox_version": 60,
+      "root_field": {
+        "key": "Homepage",
+        "type": "object",
+        "children": [
+          {
+            "key": "URL",
+            "type": "url",
+            "required": true
+          },
+          {
+            "key": "StartPage",
+            "type": "enum",
+            "enum_values": [
+              "none",
+              "homepage",
+              "previous-session",
+              "homepage-locked"
+            ]
+          },
+          {
+            "key": "Locked",
+            "type": "boolean",
+            "default": false
+          }
+        ]
+      }
+    },
+    "InstallAddonsPermission": {
+      "name": "InstallAddonsPermission",
+      "category": "Extensions",
+      "description": "Configure which origins may prompt to install extensions.",
+      "min_firefox_version": 60,
+      "root_field": {
+        "key": "InstallAddonsPermission",
+        "type": "object",
+        "children": [
+          {
+            "key": "Allow",
+            "type": "array",
+            "children": [
+              {
+                "key": "[]",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "key": "Default",
+            "type": "boolean",
+            "default": true
+          }
+        ]
+      }
+    },
+    "NetworkPrediction": {
+      "name": "NetworkPrediction",
+      "category": "Privacy & Network",
+      "description": "Enable or disable network prediction (DNS prefetching, TCP/TLS preconnect).",
+      "min_firefox_version": 67,
+      "root_field": {
+        "key": "NetworkPrediction",
+        "type": "boolean",
+        "default": true
+      }
+    },
+    "PasswordManagerEnabled": {
+      "name": "PasswordManagerEnabled",
+      "category": "Security",
+      "description": "Enable or disable the built-in password manager.",
+      "min_firefox_version": 70,
+      "root_field": {
+        "key": "PasswordManagerEnabled",
+        "type": "boolean",
+        "default": true
+      }
+    },
+    "Permissions": {
+      "name": "Permissions",
+      "category": "Security",
+      "description": "Configure per-feature site permission defaults (Camera, Microphone, Autoplay, Notifications, etc.).",
+      "min_firefox_version": 62,
+      "root_field": {
+        "key": "Permissions",
+        "type": "object",
+        "children": [
+          {
+            "key": "*",
+            "type": "object",
+            "children": [
+              {
+                "key": "Allow",
+                "type": "array",
+                "children": [
+                  {
+                    "key": "[]",
+                    "type": "string"
+                  }
+                ]
+              },
+              {
+                "key": "Block",
+                "type": "array",
+                "children": [
+                  {
+                    "key": "[]",
+                    "type": "string"
+                  }
+                ]
+              },
+              {
+                "key": "BlockNewRequests",
+                "type": "boolean"
+              },
+              {
+                "key": "Locked",
+                "type": "boolean"
+              },
+              {
+                "key": "Default",
+                "type": "string"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    "PopupBlocking": {
+      "name": "PopupBlocking",
+      "category": "Security",
+      "description": "Configure pop-up window blocking.",
+      "min_firefox_version": 60,
+      "root_field": {
+        "key": "PopupBlocking",
+        "type": "object",
+        "children": [
+          {
+            "key": "Allow",
+            "type": "array",
+            "children": [
+              {
+                "key": "[]",
+                "type": "string"
+              }
+            ]
+          },
+          {
+            "key": "Default",
+            "type": "boolean",
+            "default": true
+          },
+          {
+            "key": "Locked",
+            "type": "boolean",
+            "default": false
+          }
+        ]
+      }
+    },
+    "Preferences": {
+      "name": "Preferences",
+      "category": "Custom Preferences",
+      "description": "Set arbitrary preference values directly.",
+      "min_firefox_version": 81,
+      "root_field": {
+        "key": "Preferences",
+        "type": "object",
+        "children": [
+          {
+            "key": "*",
+            "type": "object",
+            "children": [
+              {
+                "key": "Value",
+                "type": "string"
+              },
+              {
+                "key": "Status",
+                "type": "enum",
+                "enum_values": [
+                  "default",
+                  "locked",
+                  "user"
+                ]
+              }
             ]
           }
         ]
@@ -140,22 +560,135 @@
           {
             "key": "Mode",
             "type": "enum",
-            "enum_values": ["none", "system", "manual", "autoDetect", "autoConfig"]
+            "enum_values": [
+              "none",
+              "system",
+              "manual",
+              "autoDetect",
+              "autoConfig"
+            ]
           },
-          { "key": "HTTPProxy", "type": "string" },
-          { "key": "Locked", "type": "boolean", "default": false }
+          {
+            "key": "HTTPProxy",
+            "type": "string"
+          },
+          {
+            "key": "Locked",
+            "type": "boolean",
+            "default": false
+          }
         ]
       }
     },
-    "Preferences": {
-      "name": "Preferences",
-      "category": "Custom Preferences",
-      "description": "Set arbitrary preference values directly.",
-      "min_firefox_version": 81,
+    "SSLVersionMin": {
+      "name": "SSLVersionMin",
+      "category": "Security",
+      "description": "Set the minimum allowed TLS/SSL version.",
+      "min_firefox_version": 66,
       "root_field": {
-        "key": "Preferences",
+        "key": "SSLVersionMin",
+        "type": "enum",
+        "enum_values": [
+          "tls1",
+          "tls1.1",
+          "tls1.2",
+          "tls1.3"
+        ]
+      }
+    },
+    "SanitizeOnShutdown": {
+      "name": "SanitizeOnShutdown",
+      "category": "Privacy & Network",
+      "description": "Configure which browsing data is cleared automatically on shutdown.",
+      "min_firefox_version": 60,
+      "root_field": {
+        "key": "SanitizeOnShutdown",
         "type": "object",
-        "children": []
+        "children": [
+          {
+            "key": "Cache",
+            "type": "boolean"
+          },
+          {
+            "key": "Cookies",
+            "type": "boolean"
+          },
+          {
+            "key": "Downloads",
+            "type": "boolean"
+          },
+          {
+            "key": "FormData",
+            "type": "boolean"
+          },
+          {
+            "key": "History",
+            "type": "boolean"
+          },
+          {
+            "key": "Sessions",
+            "type": "boolean"
+          },
+          {
+            "key": "SiteSettings",
+            "type": "boolean"
+          },
+          {
+            "key": "OfflineApps",
+            "type": "boolean"
+          },
+          {
+            "key": "Locked",
+            "type": "boolean"
+          }
+        ]
+      }
+    },
+    "SearchSuggestEnabled": {
+      "name": "SearchSuggestEnabled",
+      "category": "Privacy & Network",
+      "description": "Enable or disable search suggestions.",
+      "min_firefox_version": 68,
+      "root_field": {
+        "key": "SearchSuggestEnabled",
+        "type": "boolean",
+        "default": true
+      }
+    },
+    "UserMessaging": {
+      "name": "UserMessaging",
+      "category": "UI/Bookmarks",
+      "description": "Configure in-product recommendations and messaging shown to the user.",
+      "min_firefox_version": 75,
+      "root_field": {
+        "key": "UserMessaging",
+        "type": "object",
+        "children": [
+          {
+            "key": "ExtensionRecommendations",
+            "type": "boolean"
+          },
+          {
+            "key": "FeatureRecommendations",
+            "type": "boolean"
+          },
+          {
+            "key": "UrlbarInterventions",
+            "type": "boolean"
+          },
+          {
+            "key": "SkipOnboarding",
+            "type": "boolean"
+          },
+          {
+            "key": "MoreFromMozilla",
+            "type": "boolean"
+          },
+          {
+            "key": "Locked",
+            "type": "boolean"
+          }
+        ]
       }
     }
   }
