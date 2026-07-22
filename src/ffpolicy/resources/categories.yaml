@@ -6,17 +6,27 @@ Security:
   - SSLVersionMin
   - Certificates
   - BlockAboutConfig
+  - PasswordManagerEnabled
+  - PopupBlocking
+  - DisableDeveloperTools
+  - Permissions
+  - DisabledCiphers
+  - EncryptedMediaExtensions
 
 Extensions:
   - ExtensionSettings
   - ExtensionUpdate
   - Extensions
+  - InstallAddonsPermission
 
 UI/Bookmarks:
   - Bookmarks
   - DisplayBookmarksToolbar
   - Homepage
   - NewTabPage
+  - UserMessaging
+  - FirefoxHome
+  - DisableFeedbackCommands
 
 Privacy & Network:
   - DisableTelemetry
@@ -24,6 +34,14 @@ Privacy & Network:
   - DisableFirefoxAccounts
   - Proxy
   - DNSOverHTTPS
+  - DisableFormHistory
+  - DisableForgetButton
+  - DisablePrivateBrowsing
+  - SearchSuggestEnabled
+  - NetworkPrediction
+  - EnableTrackingProtection
+  - SanitizeOnShutdown
+  - DisableFirefoxStudies
 
 Updates:
   - DisableAppUpdate

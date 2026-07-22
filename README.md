@@ -29,6 +29,14 @@ Input files are YAML or JSON, either a bare `policy-name: value` mapping or a
 `{firefox_version, policies}` wrapper - see `tests/fixtures/sample_input.yaml`.
 Pass `--offline` to skip the live Mozilla schema sync and use the bundled fallback.
 
+### Compliance presets
+
+Bundled presets apply a known-good baseline in one step, then let you layer
+your own settings on top. See [`docs/DISA_STIG.md`](docs/DISA_STIG.md) for the
+DISA STIG (Mozilla Firefox) preset - `python -m ffpolicy presets` to list what's
+available, `--preset disa_stig` on `validate`/`generate`/`export`/`preview`, or
+the GUI's Presets menu.
+
 ## Development
 
 ```bash

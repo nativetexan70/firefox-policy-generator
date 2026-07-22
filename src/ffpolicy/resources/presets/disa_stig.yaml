@@ -1,0 +1,260 @@
+id: disa_stig
+name: DISA STIG - Mozilla Firefox
+description: 'DISA Security Technical Implementation Guide for Mozilla Firefox (Release
+  8, Benchmark Date: 01 Jul 2026). Values are taken from each rule''s official Linux
+  policies.json fix text, merged where multiple rules configure different keys of
+  the same policy (e.g. Preferences, EnableTrackingProtection).'
+source: https://cyber.mil (STIG.DOD.MIL) - MOZ_Firefox_STIG, Benchmark id MOZ_Firefox_STIG,
+  version 6
+values:
+  SSLVersionMin: tls1.2
+  Preferences:
+    security.default_personal_cert:
+      Value: Ask Every Time
+      Status: locked
+    browser.search.update:
+      Value: false
+      Status: locked
+    dom.disable_window_move_resize:
+      Value: true
+      Status: locked
+    dom.disable_window_flip:
+      Value: true
+      Status: locked
+    browser.contentblocking.category:
+      Value: strict
+      Status: locked
+    extensions.htmlaboutaddons.recommendations.enabled:
+      Value: false
+      Status: locked
+  ExtensionUpdate: false
+  DisableFormHistory: true
+  PasswordManagerEnabled: false
+  PopupBlocking:
+    Default: true
+    Locked: true
+  InstallAddonsPermission:
+    Default: false
+  DisableTelemetry: true
+  DisableDeveloperTools: true
+  DisableForgetButton: true
+  DisablePrivateBrowsing: true
+  SearchSuggestEnabled: false
+  Permissions:
+    Autoplay:
+      Default: block-audio-video
+  NetworkPrediction: false
+  EnableTrackingProtection:
+    Fingerprinting: true
+    Cryptomining: true
+  DisabledCiphers:
+    TLS_RSA_WITH_3DES_EDE_CBC_SHA: true
+  UserMessaging:
+    ExtensionRecommendations: false
+  FirefoxHome:
+    Search: false
+    TopSites: false
+    SponsoredTopSites: false
+    Pocket: false
+    SponsoredPocket: false
+    Highlights: false
+    Snippets: false
+    Locked: true
+  DNSOverHTTPS:
+    Enabled: false
+  DisableFirefoxAccounts: true
+  DisableFeedbackCommands: true
+  EncryptedMediaExtensions:
+    Enabled: false
+    Locked: true
+  SanitizeOnShutdown:
+    Cache: false
+    Cookies: false
+    Downloads: false
+    FormData: false
+    History: false
+    Sessions: false
+    SiteSettings: false
+    OfflineApps: false
+    Locked: true
+  DisableFirefoxStudies: true
+rules:
+- id: V-251545
+  version: FFOX-00-000001
+  severity: high
+  policy: null
+  title: The installed version of Firefox must be supported.
+  note: Not expressible in policies.json - upgrade to a vendor-supported release and
+    verify via Help > About Firefox.
+- id: V-251546
+  version: FFOX-00-000002
+  severity: high
+  policy: SSLVersionMin
+  title: Firefox must be configured to allow only TLS 1.2 or above.
+- id: V-251547
+  version: FFOX-00-000003
+  severity: medium
+  policy: Preferences
+  title: Firefox must be configured to ask which certificate to present to a website
+    when a certificate is required.
+- id: V-251548
+  version: FFOX-00-000004
+  severity: medium
+  policy: Preferences
+  title: Firefox must be configured to not automatically check for updated versions
+    of installed search plugins.
+- id: V-251549
+  version: FFOX-00-000005
+  severity: medium
+  policy: ExtensionUpdate
+  title: Firefox must be configured to not automatically update installed add-ons
+    and plugins.
+- id: V-251550
+  version: FFOX-00-000006
+  severity: medium
+  policy: null
+  title: Firefox must be configured to not automatically execute or download MIME
+    types that are not authorized for auto-download.
+  note: Organization-specific allowlist - not automated by this preset.
+- id: V-251551
+  version: FFOX-00-000007
+  severity: medium
+  policy: DisableFormHistory
+  title: Firefox must be configured to disable form fill assistance.
+- id: V-251552
+  version: FFOX-00-000008
+  severity: medium
+  policy: PasswordManagerEnabled
+  title: Firefox must be configured to not use a password store with or without a
+    master password.
+- id: V-251553
+  version: FFOX-00-000009
+  severity: medium
+  policy: PopupBlocking
+  title: Firefox must be configured to block pop-up windows.
+  note: PopupBlocking.Allow (site allowlist) is optional and organization-specific
+    - not set by this preset.
+- id: V-251554
+  version: FFOX-00-000010
+  severity: medium
+  policy: Preferences
+  title: Firefox must be configured to prevent JavaScript from moving or resizing
+    windows.
+- id: V-251555
+  version: FFOX-00-000011
+  severity: medium
+  policy: Preferences
+  title: Firefox must be configured to prevent JavaScript from raising or lowering
+    windows.
+- id: V-251557
+  version: FFOX-00-000013
+  severity: medium
+  policy: InstallAddonsPermission
+  title: Firefox must be configured to disable the installation of extensions.
+- id: V-251558
+  version: FFOX-00-000014
+  severity: medium
+  policy: DisableTelemetry
+  title: Background submission of information to Mozilla must be disabled.
+- id: V-251559
+  version: FFOX-00-000015
+  severity: low
+  policy: DisableDeveloperTools
+  title: Firefox development tools must be disabled.
+- id: V-251560
+  version: FFOX-00-000016
+  severity: medium
+  policy: null
+  title: Firefox must have the DOD root certificates installed.
+  note: Certificate installation is an OS/GPO-level action, not a policies.json setting.
+- id: V-251562
+  version: FFOX-00-000018
+  severity: medium
+  policy: DisableForgetButton
+  title: Firefox must prevent the user from quickly deleting data.
+- id: V-251563
+  version: FFOX-00-000019
+  severity: medium
+  policy: DisablePrivateBrowsing
+  title: Firefox private browsing must be disabled.
+- id: V-251564
+  version: FFOX-00-000020
+  severity: medium
+  policy: SearchSuggestEnabled
+  title: Firefox search suggestions must be disabled.
+- id: V-251565
+  version: FFOX-00-000021
+  severity: low
+  policy: Permissions
+  title: Firefox autoplay must be disabled.
+- id: V-251566
+  version: FFOX-00-000022
+  severity: medium
+  policy: NetworkPrediction
+  title: Firefox network prediction must be disabled.
+- id: V-251567
+  version: FFOX-00-000023
+  severity: medium
+  policy: EnableTrackingProtection
+  title: Firefox fingerprinting protection must be enabled.
+- id: V-251568
+  version: FFOX-00-000024
+  severity: medium
+  policy: EnableTrackingProtection
+  title: Firefox cryptomining protection must be enabled.
+- id: V-251569
+  version: FFOX-00-000025
+  severity: medium
+  policy: Preferences
+  title: Firefox Enhanced Tracking Protection must be enabled.
+- id: V-251570
+  version: FFOX-00-000026
+  severity: medium
+  policy: Preferences
+  title: Firefox extension recommendations must be disabled.
+- id: V-251571
+  version: FFOX-00-000027
+  severity: medium
+  policy: DisabledCiphers
+  title: Firefox deprecated ciphers must be disabled.
+- id: V-251572
+  version: FFOX-00-000028
+  severity: medium
+  policy: UserMessaging
+  title: Firefox must not recommend extensions as the user is using the browser.
+- id: V-251573
+  version: FFOX-00-000029
+  severity: medium
+  policy: FirefoxHome
+  title: The Firefox New Tab page must not show Top Sites, Sponsored Top Sites, Pocket
+    Recommendations, Sponsored Pocket Stories, Searches, Highlights, or Snippets.
+- id: V-251577
+  version: FFOX-00-000033
+  severity: medium
+  policy: DNSOverHTTPS
+  title: Firefox must be configured so that DNS over HTTPS is disabled.
+- id: V-251578
+  version: FFOX-00-000034
+  severity: medium
+  policy: DisableFirefoxAccounts
+  title: Firefox accounts must be disabled.
+- id: V-251580
+  version: FFOX-00-000036
+  severity: medium
+  policy: DisableFeedbackCommands
+  title: Firefox feedback reporting must be disabled.
+- id: V-251581
+  version: FFOX-00-000037
+  severity: medium
+  policy: EncryptedMediaExtensions
+  title: Firefox encrypted media extensions must be disabled.
+- id: V-252881
+  version: FFOX-00-000017
+  severity: medium
+  policy: SanitizeOnShutdown
+  title: Firefox must be configured to not delete data upon shutdown.
+- id: V-252909
+  version: FFOX-00-000039
+  severity: medium
+  policy: DisableFirefoxStudies
+  title: Firefox Studies must be disabled.

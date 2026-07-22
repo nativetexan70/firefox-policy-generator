@@ -92,3 +92,55 @@ def test_preview_prints_json_without_writing(valid_input):
     result = runner.invoke(app, ["preview", str(valid_input)])
     assert result.exit_code == 0
     assert '"DisableTelemetry": true' in result.stdout
+
+
+def test_presets_command_lists_disa_stig():
+    result = runner.invoke(app, ["presets"])
+    assert result.exit_code == 0
+    assert "disa_stig" in result.stdout
+    assert "DISA STIG" in result.stdout
+    assert "V-251545" in result.stdout  # manual/procedural item is called out
+
+
+def test_preview_with_preset_and_no_input_file():
+    result = runner.invoke(app, ["preview", "--preset", "disa_stig"])
+    assert result.exit_code == 0
+    assert '"DisableTelemetry": true' in result.stdout
+    assert '"SSLVersionMin": "tls1.2"' in result.stdout
+
+
+def test_preview_requires_input_file_or_preset():
+    result = runner.invoke(app, ["preview"])
+    assert result.exit_code != 0
+
+
+def test_preview_unknown_preset_errors():
+    result = runner.invoke(app, ["preview", "--preset", "not-a-real-preset"])
+    assert result.exit_code != 0
+
+
+def test_generate_with_preset_and_manual_override(tmp_path):
+    """The preset+manual-settings workflow: apply the STIG baseline, then let
+    an input file override/extend specific policies on top of it.
+    """
+    override = tmp_path / "override.yaml"
+    override.write_text(
+        "policies:\n"
+        "  PopupBlocking:\n"
+        "    Allow: [\"https://intranet.example.mil/\"]\n"
+        "    Default: true\n"
+        "    Locked: true\n"
+    )
+    output = tmp_path / "policies.json"
+
+    result = runner.invoke(
+        app,
+        ["generate", str(override), "--preset", "disa_stig", "-o", str(output), "--offline"],
+    )
+
+    assert result.exit_code == 0, result.stdout
+    written = json.loads(output.read_text())["policies"]
+    # preset-derived value, untouched by the override file
+    assert written["DisableTelemetry"] is True
+    # override file's value for a key the preset also set
+    assert written["PopupBlocking"]["Allow"] == ["https://intranet.example.mil/"]

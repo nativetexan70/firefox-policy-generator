@@ -1,5 +1,9 @@
-import pytest
+from unittest.mock import patch
 
+import pytest
+from PySide6.QtWidgets import QMessageBox
+
+from ffpolicy.core.presets import load_preset
 from ffpolicy.fetchers.schema_sync import load_bundled_schema
 from ffpolicy.gui.extension_manager import ExtensionManager
 from ffpolicy.gui.main_window import MainWindow
@@ -85,3 +89,36 @@ def test_manual_add_row_ignores_empty_guid(qtbot, main_window):
     manager._on_manual_add()
 
     assert manager.get_value() == {}
+
+
+def test_apply_preset_updates_document_and_preview(qtbot, main_window):
+    preset = load_preset("disa_stig")
+
+    with patch.object(QMessageBox, "question", return_value=QMessageBox.StandardButton.Yes):
+        with patch.object(QMessageBox, "information", return_value=QMessageBox.StandardButton.Ok):
+            main_window._on_apply_preset(preset)
+
+    assert main_window.document.values["DisableTelemetry"] is True
+    assert main_window.document.values["SSLVersionMin"] == "tls1.2"
+    assert '"DisableTelemetry": true' in main_window.preview.toPlainText()
+
+
+def test_declining_preset_confirmation_leaves_document_unchanged(qtbot, main_window):
+    preset = load_preset("disa_stig")
+
+    with patch.object(QMessageBox, "question", return_value=QMessageBox.StandardButton.No):
+        main_window._on_apply_preset(preset)
+
+    assert main_window.document.values == {}
+
+
+def test_apply_preset_refreshes_currently_open_form(qtbot, main_window):
+    main_window._on_policy_selected("DisableTelemetry")
+    preset = load_preset("disa_stig")
+
+    with patch.object(QMessageBox, "question", return_value=QMessageBox.StandardButton.Yes):
+        with patch.object(QMessageBox, "information", return_value=QMessageBox.StandardButton.Ok):
+            main_window._on_apply_preset(preset)
+
+    form = main_window._editor_layout.itemAt(0).widget()
+    assert form._editor.get_value() is True

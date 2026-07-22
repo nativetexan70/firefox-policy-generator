@@ -22,6 +22,7 @@ from PySide6.QtWidgets import (
 
 from ffpolicy.core.errors import ExportError
 from ffpolicy.core.generator import export_policies_json
+from ffpolicy.core.presets import Preset, apply_preset, load_bundled_presets
 from ffpolicy.core.validator import validate_document
 from ffpolicy.fetchers.schema_sync import sync_schema
 from ffpolicy.gui.category_tree import CategoryTree
@@ -76,6 +77,9 @@ class MainWindow(QMainWindow):
         if schema is None:
             schema, schema_tier = sync_schema()
         self.schema = schema
+        self._current_policy_name: str | None = None
+
+        self._build_menu_bar()
 
         self._debounce = QTimer(self)
         self._debounce.setSingleShot(True)
@@ -137,6 +141,56 @@ class MainWindow(QMainWindow):
 
         self._refresh_preview_and_validation()
 
+    def _build_menu_bar(self) -> None:
+        presets_menu = self.menuBar().addMenu("&Presets")
+        presets = load_bundled_presets()
+
+        if not presets:
+            no_presets_action = presets_menu.addAction("No bundled presets")
+            no_presets_action.setEnabled(False)
+            return
+
+        for preset in sorted(presets.values(), key=lambda p: p.name):
+            action = presets_menu.addAction(f"Apply {preset.name}...")
+            action.triggered.connect(lambda _checked=False, p=preset: self._on_apply_preset(p))
+
+    def _on_apply_preset(self, preset: Preset) -> None:
+        confirmed = QMessageBox.question(
+            self,
+            f"Apply {preset.name}?",
+            (
+                f"{preset.description}\n\n"
+                f"This sets {len(preset.values)} policies to match this baseline, "
+                "overwriting any existing values for those policies. Other policies "
+                "are left untouched.\n\nContinue?"
+            ),
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No,
+        )
+        if confirmed != QMessageBox.StandardButton.Yes:
+            return
+
+        apply_preset(self.document, preset)
+
+        if self._current_policy_name is not None:
+            self._on_policy_selected(self._current_policy_name)
+        self._refresh_preview_and_validation()
+
+        if preset.manual_rules:
+            items = "\n".join(
+                f"- [{rule.id}, {rule.severity}] {rule.title}\n  {rule.note or ''}".rstrip()
+                for rule in preset.manual_rules
+            )
+            QMessageBox.information(
+                self,
+                "Manual/procedural items remaining",
+                (
+                    f"{preset.name} applied. {len(preset.manual_rules)} rule(s) in this "
+                    f"baseline aren't expressible in policies.json and need manual or "
+                    f"procedural action:\n\n{items}"
+                ),
+            )
+
     def _center_on_screen(self) -> None:
         screen = QGuiApplication.primaryScreen()
         if screen is None:
@@ -158,6 +212,7 @@ class MainWindow(QMainWindow):
         if definition is None:
             return
 
+        self._current_policy_name = name
         self._clear_editor()
 
         if name == "ExtensionSettings":

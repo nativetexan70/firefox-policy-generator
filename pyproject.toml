@@ -38,7 +38,7 @@ ffpolicy = "ffpolicy.__main__:main"
 where = ["src"]
 
 [tool.setuptools.package-data]
-"ffpolicy.resources" = ["*.json", "*.yaml", "icons/*"]
+"ffpolicy.resources" = ["*.json", "*.yaml", "icons/*", "presets/*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
