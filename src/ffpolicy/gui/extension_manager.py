@@ -8,11 +8,13 @@ from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
     QComboBox,
     QHBoxLayout,
+    QHeaderView,
     QLabel,
     QLineEdit,
     QListWidget,
     QListWidgetItem,
     QPushButton,
+    QSizePolicy,
     QTableWidget,
     QTableWidgetItem,
     QVBoxLayout,
@@ -33,42 +35,64 @@ class ExtensionManager(QWidget):
         self._settings: dict[str, dict[str, Any]] = dict(value or {})
 
         layout = QVBoxLayout(self)
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(10)
 
         search_row = QHBoxLayout()
+        search_row.setSpacing(8)
         self._search_box = QLineEdit()
         self._search_box.setPlaceholderText("Search AMO by extension name...")
         self._search_box.returnPressed.connect(self._on_search)
         search_button = QPushButton("Search")
         search_button.clicked.connect(self._on_search)
-        search_row.addWidget(self._search_box)
+        search_row.addWidget(self._search_box, 1)
         search_row.addWidget(search_button)
         layout.addLayout(search_row)
 
         self._results_list = QListWidget()
+        self._results_list.setMaximumHeight(110)
         self._results_list.itemDoubleClicked.connect(self._on_result_chosen)
         layout.addWidget(self._results_list)
 
         self._search_status = QLabel("")
+        self._search_status.setStyleSheet("color: #6b7480;")
         layout.addWidget(self._search_status)
 
+        manual_header = QLabel("Add manually")
+        manual_header.setProperty("role", "sectionHeader")
+        layout.addWidget(manual_header)
+
         manual_row = QHBoxLayout()
+        manual_row.setSpacing(8)
         self._manual_guid = QLineEdit()
         self._manual_guid.setPlaceholderText("Extension GUID (e.g. ext@example.com)")
         self._manual_mode = QComboBox()
         self._manual_mode.addItems([mode.value for mode in InstallationMode])
         self._manual_url = QLineEdit()
         self._manual_url.setPlaceholderText("Install URL (required for *_installed modes)")
-        manual_add_button = QPushButton("Add manually")
+        manual_add_button = QPushButton("Add")
         manual_add_button.clicked.connect(self._on_manual_add)
-        manual_row.addWidget(self._manual_guid)
-        manual_row.addWidget(self._manual_mode)
-        manual_row.addWidget(self._manual_url)
+        manual_row.addWidget(self._manual_guid, 2)
+        manual_row.addWidget(self._manual_mode, 1)
+        manual_row.addWidget(self._manual_url, 2)
         manual_row.addWidget(manual_add_button)
         layout.addLayout(manual_row)
 
+        configured_header = QLabel("Configured extensions")
+        configured_header.setProperty("role", "sectionHeader")
+        layout.addWidget(configured_header)
+
         self._table = QTableWidget(0, 4)
         self._table.setHorizontalHeaderLabels(["GUID", "Mode", "Install URL", ""])
-        layout.addWidget(self._table)
+        self._table.verticalHeader().setVisible(False)
+        self._table.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+        header = self._table.horizontalHeader()
+        header.setSectionResizeMode(0, QHeaderView.ResizeMode.Interactive)
+        header.setSectionResizeMode(1, QHeaderView.ResizeMode.ResizeToContents)
+        header.setSectionResizeMode(2, QHeaderView.ResizeMode.Stretch)
+        header.setSectionResizeMode(3, QHeaderView.ResizeMode.ResizeToContents)
+        self._table.setColumnWidth(0, 220)
+        layout.addWidget(self._table, 1)
 
         self._refresh_table()
 
