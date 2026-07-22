@@ -6,6 +6,7 @@ import sys
 from typing import Any
 
 from PySide6.QtCore import Qt, QTimer
+from PySide6.QtGui import QGuiApplication
 from PySide6.QtWidgets import (
     QApplication,
     QFileDialog,
@@ -33,6 +34,13 @@ from ffpolicy.models.policy_schema import PolicySchema
 
 _PREVIEW_DEBOUNCE_MS = 150
 
+# The window is fixed (non-resizable) and sized for a 1920x1080 (FHD) display:
+# comfortably smaller than the full screen so window decorations, taskbars, and
+# panels never push it off-screen, while still using the space well.
+_WINDOW_WIDTH = 1600
+_WINDOW_HEIGHT = 900
+_SPLITTER_SIZES = [280, 640, 680]  # tree | editor | preview, sums to _WINDOW_WIDTH
+
 
 class MainWindow(QMainWindow):
     def __init__(
@@ -43,7 +51,8 @@ class MainWindow(QMainWindow):
     ) -> None:
         super().__init__(parent)
         self.setWindowTitle("Firefox Policy Generator")
-        self.resize(1200, 800)
+        self.setFixedSize(_WINDOW_WIDTH, _WINDOW_HEIGHT)
+        self._center_on_screen()
 
         self.document = PolicyDocument()
         if schema is None:
@@ -68,7 +77,7 @@ class MainWindow(QMainWindow):
 
         self.preview = JsonPreview()
         splitter.addWidget(self.preview)
-        splitter.setSizes([250, 500, 450])
+        splitter.setSizes(_SPLITTER_SIZES)
 
         central = QWidget()
         central_layout = QVBoxLayout(central)
@@ -90,6 +99,15 @@ class MainWindow(QMainWindow):
         )
 
         self._refresh_preview_and_validation()
+
+    def _center_on_screen(self) -> None:
+        screen = QGuiApplication.primaryScreen()
+        if screen is None:
+            return
+        available = screen.availableGeometry()
+        x = available.x() + (available.width() - _WINDOW_WIDTH) // 2
+        y = available.y() + (available.height() - _WINDOW_HEIGHT) // 2
+        self.move(max(x, available.x()), max(y, available.y()))
 
     def _clear_editor(self) -> None:
         while self._editor_layout.count():
