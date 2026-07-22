@@ -1,0 +1,21 @@
+{
+  "policies": {
+    "BlockAboutConfig": true,
+    "DisablePocket": true,
+    "DisableTelemetry": true,
+    "ExtensionSettings": {
+      "evil@example.com": {
+        "installation_mode": "blocked"
+      },
+      "uBlock0@raymondhill.net": {
+        "install_url": "https://addons.mozilla.org/firefox/downloads/latest/ublock-origin/latest.xpi",
+        "installation_mode": "force_installed"
+      }
+    },
+    "Homepage": {
+      "Locked": true,
+      "StartPage": "homepage",
+      "URL": "https://example.com/start"
+    }
+  }
+}

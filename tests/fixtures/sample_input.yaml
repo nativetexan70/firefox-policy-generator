@@ -1,0 +1,14 @@
+policies:
+  DisableTelemetry: true
+  DisablePocket: true
+  BlockAboutConfig: true
+  Homepage:
+    URL: "https://example.com/start"
+    Locked: true
+    StartPage: homepage
+  ExtensionSettings:
+    uBlock0@raymondhill.net:
+      installation_mode: force_installed
+      install_url: "https://addons.mozilla.org/firefox/downloads/latest/ublock-origin/latest.xpi"
+    evil@example.com:
+      installation_mode: blocked

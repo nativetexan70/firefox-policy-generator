@@ -1,0 +1,162 @@
+{
+  "source_version": "bundled-2024.1",
+  "fetched_at": "2024-01-01T00:00:00Z",
+  "policies": {
+    "DisableTelemetry": {
+      "name": "DisableTelemetry",
+      "category": "Privacy & Network",
+      "description": "Disable Telemetry data collection.",
+      "min_firefox_version": 60,
+      "root_field": {
+        "key": "DisableTelemetry",
+        "type": "boolean",
+        "default": false
+      }
+    },
+    "DisablePocket": {
+      "name": "DisablePocket",
+      "category": "Privacy & Network",
+      "description": "Disable the Pocket integration.",
+      "min_firefox_version": 57,
+      "root_field": {
+        "key": "DisablePocket",
+        "type": "boolean",
+        "default": false
+      }
+    },
+    "DisableFirefoxAccounts": {
+      "name": "DisableFirefoxAccounts",
+      "category": "Privacy & Network",
+      "description": "Disable Firefox Accounts / Sync.",
+      "min_firefox_version": 60,
+      "root_field": {
+        "key": "DisableFirefoxAccounts",
+        "type": "boolean",
+        "default": false
+      }
+    },
+    "DisableAppUpdate": {
+      "name": "DisableAppUpdate",
+      "category": "Updates",
+      "description": "Disable Firefox application updates.",
+      "min_firefox_version": 60,
+      "root_field": {
+        "key": "DisableAppUpdate",
+        "type": "boolean",
+        "default": false
+      }
+    },
+    "Homepage": {
+      "name": "Homepage",
+      "category": "UI/Bookmarks",
+      "description": "Configure the default homepage.",
+      "min_firefox_version": 60,
+      "root_field": {
+        "key": "Homepage",
+        "type": "object",
+        "children": [
+          { "key": "URL", "type": "url", "required": true },
+          {
+            "key": "StartPage",
+            "type": "enum",
+            "enum_values": ["homepage", "previous-session", "none"]
+          },
+          { "key": "Locked", "type": "boolean", "default": false }
+        ]
+      }
+    },
+    "DisplayBookmarksToolbar": {
+      "name": "DisplayBookmarksToolbar",
+      "category": "UI/Bookmarks",
+      "description": "Show the bookmarks toolbar by default.",
+      "min_firefox_version": 60,
+      "root_field": {
+        "key": "DisplayBookmarksToolbar",
+        "type": "boolean",
+        "default": false
+      }
+    },
+    "SSLVersionMin": {
+      "name": "SSLVersionMin",
+      "category": "Security",
+      "description": "Set the minimum allowed TLS/SSL version.",
+      "min_firefox_version": 60,
+      "root_field": {
+        "key": "SSLVersionMin",
+        "type": "enum",
+        "enum_values": ["tls1", "tls1.1", "tls1.2", "tls1.3"]
+      }
+    },
+    "BlockAboutConfig": {
+      "name": "BlockAboutConfig",
+      "category": "Security",
+      "description": "Block access to about:config.",
+      "min_firefox_version": 62,
+      "root_field": {
+        "key": "BlockAboutConfig",
+        "type": "boolean",
+        "default": false
+      }
+    },
+    "ExtensionSettings": {
+      "name": "ExtensionSettings",
+      "category": "Extensions",
+      "description": "Manage which extensions can/must be installed.",
+      "min_firefox_version": 62,
+      "root_field": {
+        "key": "ExtensionSettings",
+        "type": "object",
+        "children": [
+          {
+            "key": "*",
+            "type": "object",
+            "children": [
+              {
+                "key": "installation_mode",
+                "type": "enum",
+                "required": true,
+                "enum_values": [
+                  "allowed",
+                  "blocked",
+                  "force_installed",
+                  "normal_installed"
+                ]
+              },
+              { "key": "install_url", "type": "url" }
+            ]
+          }
+        ]
+      }
+    },
+    "Proxy": {
+      "name": "Proxy",
+      "category": "Privacy & Network",
+      "description": "Configure browser proxy settings.",
+      "min_firefox_version": 60,
+      "root_field": {
+        "key": "Proxy",
+        "type": "object",
+        "children": [
+          {
+            "key": "Mode",
+            "type": "enum",
+            "enum_values": ["none", "system", "manual", "autoDetect", "autoConfig"]
+          },
+          { "key": "HTTPProxy", "type": "string" },
+          { "key": "Locked", "type": "boolean", "default": false }
+        ]
+      }
+    },
+    "Preferences": {
+      "name": "Preferences",
+      "category": "Custom Preferences",
+      "description": "Set arbitrary preference values directly.",
+      "min_firefox_version": 65,
+      "root_field": {
+        "key": "Preferences",
+        "type": "object",
+        "children": []
+      }
+    }
+  }
+}

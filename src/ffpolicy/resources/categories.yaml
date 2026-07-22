@@ -1,0 +1,35 @@
+# Maps each known Firefox policy name to a UI category.
+# Policies not listed here fall into "Uncategorized" so nothing is ever hidden.
+
+Security:
+  - DisableSecurityBypass
+  - SSLVersionMin
+  - CertificatesDescription
+  - Certificates
+  - BlockAboutConfig
+
+Extensions:
+  - ExtensionSettings
+  - ExtensionUpdate
+  - Extensions
+
+UI/Bookmarks:
+  - Bookmarks
+  - DisplayBookmarksToolbar
+  - Homepage
+  - NewTabPage
+
+Privacy & Network:
+  - DisableTelemetry
+  - DisablePocket
+  - DisableFirefoxAccounts
+  - Proxy
+  - DNSOverHTTPS
+
+Updates:
+  - DisableAppUpdate
+  - AppUpdateURL
+  - ManualAppUpdateOnly
+
+Custom Preferences:
+  - Preferences

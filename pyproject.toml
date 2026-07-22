@@ -1,0 +1,58 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ffpolicy"
+version = "0.1.0"
+description = "Firefox Policy Generator - build, validate, and export Firefox enterprise policies.json"
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MPL-2.0" }
+dependencies = [
+    "PySide6>=6.6",
+    "requests>=2.31",
+    "pydantic>=2.4",
+    "jsonschema>=4.19",
+    "PyYAML>=6.0",
+    "platformdirs>=4.0",
+    "typer>=0.9",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4",
+    "pytest-qt>=4.2",
+    "pytest-mock>=3.11",
+    "pytest-cov>=4.1",
+    "responses>=0.23",
+    "ruff>=0.1",
+    "mypy>=1.5",
+    "import-linter>=2.0",
+]
+
+[project.scripts]
+ffpolicy = "ffpolicy.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"ffpolicy.resources" = ["*.json", "*.yaml", "icons/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+qt_api = "pyside6"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+ignore = ["UP042"]
+
+[tool.mypy]
+python_version = "3.11"
+ignore_missing_imports = true
+warn_unused_ignores = true
