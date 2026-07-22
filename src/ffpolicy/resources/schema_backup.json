@@ -386,6 +386,17 @@
         ]
       }
     },
+    "IPProtectionAvailable": {
+      "name": "IPProtectionAvailable",
+      "category": "Privacy & Network",
+      "description": "Control whether Firefox's built-in IP Protection (VPN) is available to users. When disabled, the feature is turned off and cannot be used.",
+      "min_firefox_version": 150,
+      "root_field": {
+        "key": "IPProtectionAvailable",
+        "type": "boolean",
+        "default": true
+      }
+    },
     "InstallAddonsPermission": {
       "name": "InstallAddonsPermission",
       "category": "Extensions",
