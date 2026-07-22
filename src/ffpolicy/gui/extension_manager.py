@@ -51,6 +51,21 @@ class ExtensionManager(QWidget):
         self._search_status = QLabel("")
         layout.addWidget(self._search_status)
 
+        manual_row = QHBoxLayout()
+        self._manual_guid = QLineEdit()
+        self._manual_guid.setPlaceholderText("Extension GUID (e.g. ext@example.com)")
+        self._manual_mode = QComboBox()
+        self._manual_mode.addItems([mode.value for mode in InstallationMode])
+        self._manual_url = QLineEdit()
+        self._manual_url.setPlaceholderText("Install URL (required for *_installed modes)")
+        manual_add_button = QPushButton("Add manually")
+        manual_add_button.clicked.connect(self._on_manual_add)
+        manual_row.addWidget(self._manual_guid)
+        manual_row.addWidget(self._manual_mode)
+        manual_row.addWidget(self._manual_url)
+        manual_row.addWidget(manual_add_button)
+        layout.addLayout(manual_row)
+
         self._table = QTableWidget(0, 4)
         self._table.setHorizontalHeaderLabels(["GUID", "Mode", "Install URL", ""])
         layout.addWidget(self._table)
@@ -83,6 +98,17 @@ class ExtensionManager(QWidget):
     def _on_result_chosen(self, item: QListWidgetItem) -> None:
         addon = item.data(_ADDON_ROLE)
         self.add_manual(addon.guid, InstallationMode.FORCE_INSTALLED, addon.install_url)
+
+    def _on_manual_add(self) -> None:
+        guid = self._manual_guid.text().strip()
+        if not guid:
+            return
+        mode = InstallationMode(self._manual_mode.currentText())
+        url = self._manual_url.text().strip() or None
+        self.add_manual(guid, mode, url)
+
+        self._manual_guid.clear()
+        self._manual_url.clear()
 
     def add_manual(
         self, guid: str, mode: InstallationMode, install_url: str | None = None

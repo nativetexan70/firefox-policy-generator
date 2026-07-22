@@ -59,3 +59,29 @@ def test_adding_extension_writes_extension_settings_entry(qtbot, main_window):
     settings = main_window.document.values["ExtensionSettings"]
     assert settings["uBlock0@raymondhill.net"]["installation_mode"] == "force_installed"
     assert settings["uBlock0@raymondhill.net"]["install_url"] == "https://example.com/ublock.xpi"
+
+
+def test_manual_add_row_works_when_search_is_unavailable(qtbot, main_window):
+    """Covers the fallback path promised by the "enter GUID manually below"
+    message shown when AMO search fails (rate-limited, blocked, offline).
+    """
+    main_window._on_policy_selected("ExtensionSettings")
+    manager = main_window._editor_layout.itemAt(0).widget()
+
+    manager._manual_guid.setText("ext@example.com")
+    manager._manual_mode.setCurrentText(InstallationMode.BLOCKED.value)
+    manager._on_manual_add()
+
+    assert manager.get_value() == {"ext@example.com": {"installation_mode": "blocked"}}
+    # fields reset so another extension can be entered right away
+    assert manager._manual_guid.text() == ""
+
+
+def test_manual_add_row_ignores_empty_guid(qtbot, main_window):
+    main_window._on_policy_selected("ExtensionSettings")
+    manager = main_window._editor_layout.itemAt(0).widget()
+
+    manager._manual_guid.setText("   ")
+    manager._on_manual_add()
+
+    assert manager.get_value() == {}
