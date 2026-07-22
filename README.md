@@ -37,13 +37,22 @@ packaging conventions (plus `custom`, which needs `--custom-path`):
 | `linux_lib_distribution`        | `/usr/lib/firefox/distribution/policies.json` (Debian/Ubuntu) |
 | `linux_firefox_esr`             | `/usr/lib/firefox-esr/distribution/policies.json` (Debian ESR) |
 | `linux_opt_distribution`        | `/opt/firefox/distribution/policies.json` (manual tarball installs) |
+| `linux_snap`                     | `/etc/firefox/policies/policies.json` (Firefox snap - same file as `system_linux`; the snap's read-only install dir falls back to this path) |
+| `linux_flatpak_system`           | `/var/lib/flatpak/extension/org.mozilla.firefox.systemconfig/<arch>/stable/policies/policies.json` (system-wide Flatpak Firefox) |
+| `linux_flatpak_user`             | `~/.local/share/flatpak/extension/org.mozilla.firefox.systemconfig/<arch>/stable/policies/policies.json` (per-user Flatpak Firefox) |
 | `distribution`                  | `distribution/policies.json` (relative to cwd) |
 | `custom`                        | `--custom-path` you supply                     |
 
-Every location above except `distribution`/`custom` is root-owned, so a plain
-write from an unprivileged user fails. Pass `--elevate` to retry the write via
-`pkexec` (preferred - triggers a PolicyKit auth dialog) or `sudo` (interactive
-terminal password prompt), whichever is found on `PATH`:
+Flatpak Firefox's sandbox can't see the host's `/etc`, `/usr`, or `/opt`, so
+Mozilla exposes policies through a flatpak "extension" mount point instead - a
+file placed at the host path above shows up inside the sandbox as
+`/app/etc/firefox/policies/policies.json`. `<arch>` is the flatpak
+architecture string (e.g. `x86_64`, `aarch64`), auto-detected from the host.
+
+Every location above except `distribution`/`custom`/`linux_flatpak_user` is
+root-owned, so a plain write from an unprivileged user fails. Pass `--elevate`
+to retry the write via `pkexec` (preferred - triggers a PolicyKit auth dialog)
+or `sudo` (interactive terminal password prompt), whichever is found on `PATH`:
 
 ```bash
 python -m ffpolicy export my-policies.yaml --target linux_lib64_distribution --elevate

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import platform
 import sys
 from enum import Enum
 from pathlib import Path
@@ -13,6 +14,9 @@ class ExportTarget(str, Enum):
     LINUX_LIB_DISTRIBUTION = "linux_lib_distribution"
     LINUX_FIREFOX_ESR = "linux_firefox_esr"
     LINUX_OPT_DISTRIBUTION = "linux_opt_distribution"
+    LINUX_SNAP = "linux_snap"
+    LINUX_FLATPAK_SYSTEM = "linux_flatpak_system"
+    LINUX_FLATPAK_USER = "linux_flatpak_user"
     DISTRIBUTION = "distribution"
     CUSTOM = "custom"
 
@@ -21,13 +25,34 @@ class ExportTarget(str, Enum):
 # keyed by the packaging convention that puts Firefox there. All of these
 # live under root-owned directories and normally require elevated privileges
 # to write.
+#
+# The Firefox snap has a read-only installation directory, so - per Mozilla's
+# own guidance (bugzilla.mozilla.org/show_bug.cgi?id=1717216) and Ubuntu's
+# snap enterprise-policy docs - it falls back to reading the same
+# /etc/firefox/policies/policies.json as native deb/rpm installs, rather than
+# a snap-specific path.
 LINUX_SYSTEM_PATHS: dict[ExportTarget, str] = {
     ExportTarget.SYSTEM_LINUX: "/etc/firefox/policies/policies.json",
     ExportTarget.LINUX_LIB64_DISTRIBUTION: "/usr/lib64/firefox/distribution/policies.json",
     ExportTarget.LINUX_LIB_DISTRIBUTION: "/usr/lib/firefox/distribution/policies.json",
     ExportTarget.LINUX_FIREFOX_ESR: "/usr/lib/firefox-esr/distribution/policies.json",
     ExportTarget.LINUX_OPT_DISTRIBUTION: "/opt/firefox/distribution/policies.json",
+    ExportTarget.LINUX_SNAP: "/etc/firefox/policies/policies.json",
 }
+
+# Flatpak Firefox's sandbox can't see the host's /etc, /usr, or /opt, so
+# Mozilla exposes policies.json through a flatpak "extension" mount point
+# instead (bugzilla.mozilla.org/show_bug.cgi?id=1682462): a file dropped at
+# this host path appears inside the sandbox as /app/etc/firefox/policies/
+# policies.json. The path is architecture-qualified; `platform.machine()`
+# (e.g. "x86_64", "aarch64") matches flatpak's own arch naming on Linux.
+_FLATPAK_EXTENSION_SUFFIX = (
+    "flatpak/extension/org.mozilla.firefox.systemconfig/{arch}/stable/policies/policies.json"
+)
+
+
+def _flatpak_policy_path(root: Path) -> Path:
+    return root / _FLATPAK_EXTENSION_SUFFIX.format(arch=platform.machine())
 
 
 def resolve_export_path(target: ExportTarget, custom_path: str | Path | None = None) -> Path:
@@ -48,6 +73,12 @@ def resolve_export_path(target: ExportTarget, custom_path: str | Path | None = N
     if target is ExportTarget.SYSTEM_LINUX and sys.platform == "darwin":
         return Path("/Library/Application Support/Mozilla/policies.json")
 
+    if target is ExportTarget.LINUX_FLATPAK_SYSTEM:
+        return _flatpak_policy_path(Path("/var/lib"))
+
+    if target is ExportTarget.LINUX_FLATPAK_USER:
+        return _flatpak_policy_path(Path.home() / ".local/share")
+
     if target in LINUX_SYSTEM_PATHS:
         return Path(LINUX_SYSTEM_PATHS[target])
 
@@ -57,8 +88,14 @@ def resolve_export_path(target: ExportTarget, custom_path: str | Path | None = N
 def target_requires_privileges(target: ExportTarget) -> bool:
     """Whether the target's default location is typically root-owned.
 
-    `CUSTOM` and `DISTRIBUTION` (a path relative to the current working
-    directory) are excluded - everything else resolves under `/etc`, `/usr`,
-    `/opt`, or the macOS `/Library`, none of which a regular user can write to.
+    `CUSTOM`, `DISTRIBUTION` (a path relative to the current working
+    directory), and `LINUX_FLATPAK_USER` (under the user's home directory)
+    are excluded - everything else resolves under `/etc`, `/usr`, `/opt`,
+    `/var/lib`, or the macOS `/Library`, none of which a regular user can
+    write to.
     """
-    return target not in (ExportTarget.CUSTOM, ExportTarget.DISTRIBUTION)
+    return target not in (
+        ExportTarget.CUSTOM,
+        ExportTarget.DISTRIBUTION,
+        ExportTarget.LINUX_FLATPAK_USER,
+    )

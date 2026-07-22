@@ -165,8 +165,10 @@ def export(
     """Validate and write policies.json to a standard Firefox policy location.
 
     Standard Linux locations (--target system_linux/linux_lib64_distribution/
-    linux_lib_distribution/linux_firefox_esr/linux_opt_distribution) resolve to
-    root-owned paths and normally require --elevate to write.
+    linux_lib_distribution/linux_firefox_esr/linux_opt_distribution/linux_snap/
+    linux_flatpak_system) resolve to root-owned paths and normally require
+    --elevate to write; linux_flatpak_user resolves under the home directory
+    and does not.
     """
     document, firefox_version = _load_document(input_file, preset)
     policy_schema, _tier = _load_policy_schema(offline)

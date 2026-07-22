@@ -1,3 +1,4 @@
+import platform
 import subprocess
 from pathlib import Path
 
@@ -27,6 +28,33 @@ def test_resolve_additional_linux_targets(target, expected):
     assert str(resolve_export_path(target)) == expected
 
 
+def test_resolve_snap_target_matches_system_linux():
+    # The Firefox snap has a read-only install dir, so it falls back to the
+    # same /etc/firefox/policies/policies.json as deb/rpm installs.
+    assert resolve_export_path(ExportTarget.LINUX_SNAP) == resolve_export_path(
+        ExportTarget.SYSTEM_LINUX
+    )
+
+
+def test_resolve_flatpak_system_target():
+    arch = platform.machine()
+    path = resolve_export_path(ExportTarget.LINUX_FLATPAK_SYSTEM)
+    assert str(path) == (
+        f"/var/lib/flatpak/extension/org.mozilla.firefox.systemconfig/{arch}/stable/policies/policies.json"
+    )
+
+
+def test_resolve_flatpak_user_target():
+    arch = platform.machine()
+    path = resolve_export_path(ExportTarget.LINUX_FLATPAK_USER)
+    assert str(path) == str(
+        Path.home()
+        / ".local/share/flatpak/extension/org.mozilla.firefox.systemconfig"
+        / arch
+        / "stable/policies/policies.json"
+    )
+
+
 def test_resolve_distribution_target():
     path = resolve_export_path(ExportTarget.DISTRIBUTION)
     assert str(path) == "distribution/policies.json"
@@ -40,6 +68,9 @@ def test_resolve_distribution_target():
         (ExportTarget.LINUX_LIB_DISTRIBUTION, True),
         (ExportTarget.LINUX_FIREFOX_ESR, True),
         (ExportTarget.LINUX_OPT_DISTRIBUTION, True),
+        (ExportTarget.LINUX_SNAP, True),
+        (ExportTarget.LINUX_FLATPAK_SYSTEM, True),
+        (ExportTarget.LINUX_FLATPAK_USER, False),
         (ExportTarget.DISTRIBUTION, False),
         (ExportTarget.CUSTOM, False),
     ],
