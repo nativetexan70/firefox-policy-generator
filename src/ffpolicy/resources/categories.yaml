@@ -49,5 +49,9 @@ Updates:
   - AppUpdateURL
   - ManualAppUpdateOnly
 
+AI Controls:
+  - AIControls
+  - GenerativeAI
+
 Custom Preferences:
   - Preferences
