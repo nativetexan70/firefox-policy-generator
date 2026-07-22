@@ -361,9 +361,13 @@ expressed in `policies.json` and need manual/procedural follow-up.
    baseline applied, manual/procedural items called out → hand-tune anything
    organization-specific (e.g. a pop-up allowlist) on top.
 4. **Export:** click "Export policies.json" in the footer bar → file dialog.
-   (The CLI additionally supports the three standard target locations -
-   `/etc/firefox/policies/`, `distribution/`, or a custom path - via
-   `ffpolicy export --target`; the GUI only offers "save as" today.)
+   (The CLI additionally supports the standard Linux target locations -
+   `/etc/firefox/policies/`, the per-distro `.../distribution/` install
+   directories, the Firefox snap (same `/etc` path), the Flatpak
+   system-config extension mount point (system-wide and per-user),
+   `distribution/`, or a custom path - via `ffpolicy export --target`, with
+   `--elevate` to retry a denied write via pkexec/sudo for the root-owned
+   locations; the GUI only offers "save as" today.)
 
 ### 4.6 Live preview & highlighting
 

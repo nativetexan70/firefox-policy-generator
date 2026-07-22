@@ -11,7 +11,7 @@ import yaml
 
 from ffpolicy.core.errors import ExportError, FfPolicyError
 from ffpolicy.core.generator import export_policies_json, render_policies_json
-from ffpolicy.core.paths import ExportTarget, resolve_export_path
+from ffpolicy.core.paths import ExportTarget, resolve_export_path, target_requires_privileges
 from ffpolicy.core.presets import Preset, apply_preset, load_bundled_presets, load_preset
 from ffpolicy.core.validator import IssueLevel, has_errors, validate_document
 from ffpolicy.fetchers.schema_sync import load_bundled_schema, sync_schema
@@ -151,9 +151,25 @@ def export(
     ] = None,
     preset: PresetOption = None,
     overwrite: Annotated[bool, typer.Option(help="Overwrite an existing output file")] = False,
+    elevate: Annotated[
+        bool,
+        typer.Option(
+            help=(
+                "Retry via pkexec/sudo if the target is a root-owned system "
+                "location (/etc, /usr, /opt) and a plain write is denied"
+            )
+        ),
+    ] = False,
     offline: OfflineOption = False,
 ) -> None:
-    """Validate and write policies.json to a standard Firefox policy location."""
+    """Validate and write policies.json to a standard Firefox policy location.
+
+    Standard Linux locations (--target system_linux/linux_lib64_distribution/
+    linux_lib_distribution/linux_firefox_esr/linux_opt_distribution/linux_snap/
+    linux_flatpak_system) resolve to root-owned paths and normally require
+    --elevate to write; linux_flatpak_user resolves under the home directory
+    and does not.
+    """
     document, firefox_version = _load_document(input_file, preset)
     policy_schema, _tier = _load_policy_schema(offline)
 
@@ -167,7 +183,11 @@ def export(
 
     try:
         resolved = resolve_export_path(target, custom_path)
-        written = export_policies_json(document, resolved, overwrite=overwrite)
+        if elevate and target_requires_privileges(target):
+            typer.echo(f"{resolved} may require elevated privileges - using pkexec/sudo if needed")
+        written = export_policies_json(
+            document, resolved, overwrite=overwrite, allow_privilege_escalation=elevate
+        )
     except (ExportError, FfPolicyError, ValueError) as exc:
         typer.echo(str(exc), err=True)
         raise typer.Exit(code=1) from exc
