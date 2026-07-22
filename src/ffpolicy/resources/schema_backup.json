@@ -1,6 +1,6 @@
 {
-  "source_version": "bundled-2024.1",
-  "fetched_at": "2024-01-01T00:00:00Z",
+  "source_version": "bundled-2026.1-verified",
+  "fetched_at": "2026-07-22T00:00:00Z",
   "policies": {
     "DisableTelemetry": {
       "name": "DisableTelemetry",
@@ -17,7 +17,7 @@
       "name": "DisablePocket",
       "category": "Privacy & Network",
       "description": "Disable the Pocket integration.",
-      "min_firefox_version": 57,
+      "min_firefox_version": 60,
       "root_field": {
         "key": "DisablePocket",
         "type": "boolean",
@@ -59,7 +59,7 @@
           {
             "key": "StartPage",
             "type": "enum",
-            "enum_values": ["homepage", "previous-session", "none"]
+            "enum_values": ["none", "homepage", "previous-session", "homepage-locked"]
           },
           { "key": "Locked", "type": "boolean", "default": false }
         ]
@@ -69,7 +69,7 @@
       "name": "DisplayBookmarksToolbar",
       "category": "UI/Bookmarks",
       "description": "Show the bookmarks toolbar by default.",
-      "min_firefox_version": 60,
+      "min_firefox_version": 109,
       "root_field": {
         "key": "DisplayBookmarksToolbar",
         "type": "boolean",
@@ -80,7 +80,7 @@
       "name": "SSLVersionMin",
       "category": "Security",
       "description": "Set the minimum allowed TLS/SSL version.",
-      "min_firefox_version": 60,
+      "min_firefox_version": 66,
       "root_field": {
         "key": "SSLVersionMin",
         "type": "enum",
@@ -91,7 +91,7 @@
       "name": "BlockAboutConfig",
       "category": "Security",
       "description": "Block access to about:config.",
-      "min_firefox_version": 62,
+      "min_firefox_version": 60,
       "root_field": {
         "key": "BlockAboutConfig",
         "type": "boolean",
@@ -102,7 +102,7 @@
       "name": "ExtensionSettings",
       "category": "Extensions",
       "description": "Manage which extensions can/must be installed.",
-      "min_firefox_version": 62,
+      "min_firefox_version": 69,
       "root_field": {
         "key": "ExtensionSettings",
         "type": "object",
@@ -151,7 +151,7 @@
       "name": "Preferences",
       "category": "Custom Preferences",
       "description": "Set arbitrary preference values directly.",
-      "min_firefox_version": 65,
+      "min_firefox_version": 81,
       "root_field": {
         "key": "Preferences",
         "type": "object",
