@@ -25,6 +25,33 @@ python -m ffpolicy export my-policies.yaml --target system_linux
 python -m ffpolicy preview my-policies.yaml
 ```
 
+### Export targets
+
+`--target` resolves to the standard Firefox policy locations for common Linux
+packaging conventions (plus `custom`, which needs `--custom-path`):
+
+| `--target`                     | Path                                          |
+| ------------------------------- | ---------------------------------------------- |
+| `system_linux` (default)        | `/etc/firefox/policies/policies.json`          |
+| `linux_lib64_distribution`      | `/usr/lib64/firefox/distribution/policies.json` (Fedora/RHEL) |
+| `linux_lib_distribution`        | `/usr/lib/firefox/distribution/policies.json` (Debian/Ubuntu) |
+| `linux_firefox_esr`             | `/usr/lib/firefox-esr/distribution/policies.json` (Debian ESR) |
+| `linux_opt_distribution`        | `/opt/firefox/distribution/policies.json` (manual tarball installs) |
+| `distribution`                  | `distribution/policies.json` (relative to cwd) |
+| `custom`                        | `--custom-path` you supply                     |
+
+Every location above except `distribution`/`custom` is root-owned, so a plain
+write from an unprivileged user fails. Pass `--elevate` to retry the write via
+`pkexec` (preferred - triggers a PolicyKit auth dialog) or `sudo` (interactive
+terminal password prompt), whichever is found on `PATH`:
+
+```bash
+python -m ffpolicy export my-policies.yaml --target linux_lib64_distribution --elevate
+```
+
+Without `--elevate`, a permission error is reported with a hint to pass it or
+choose a path you own.
+
 Input files are YAML or JSON, either a bare `policy-name: value` mapping or a
 `{firefox_version, policies}` wrapper - see `tests/fixtures/sample_input.yaml`.
 Pass `--offline` to skip the live Mozilla schema sync and use the bundled fallback.
