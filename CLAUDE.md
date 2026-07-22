@@ -95,14 +95,20 @@ Firefox min/max version compatibility warnings against a `PolicySchema`. GUI and
 consume the same issue list.
 
 **Presets** (`core/presets.py`, `resources/presets/*.yaml`): a preset bundles a pre-merged
-`policy-name -> value` baseline plus `rules` metadata (source rule id/severity/title, and
-which top-level policy it maps to, or `policy: null` for items that can't be expressed in
-policies.json at all). `apply_preset()` overlays a preset's values onto a `PolicyDocument`
-one top-level key at a time; CLI (`--preset <id>` on validate/generate/export/preview, plus
-a `presets` list command) and GUI (menu bar -> Presets) both apply a preset as a baseline
-that an input file or further manual edits then override. See `docs/DISA_STIG.md` for the
-bundled DISA STIG preset and why some source values (e.g. `FirefoxHome.Locked` casing) were
-corrected against Firefox's actual schema rather than copied verbatim from the STIG text.
+`policy-name -> value` baseline plus `rules` metadata (source rule id/severity/title/
+description/recommendation, and which top-level policy it maps to, or `policy: null` for
+items that can't be expressed in policies.json at all). A resource file may define a
+`profiles` list (e.g. the DISA STIG benchmark's nine Mission Assurance Category /
+confidentiality profiles); `load_bundled_presets()` expands that into one `Preset` per
+profile sharing the same `values`/`rules` (grouped by `family` for menus) instead of
+duplicating the YAML per profile. `apply_preset()` overlays a preset's values onto a
+`PolicyDocument` one top-level key at a time; CLI (`--preset <id>` on validate/generate/
+export/preview, `presets` to list, `preset-info <id>` for full rule descriptions) and GUI
+(menu bar -> Presets, grouped into a submenu per family with a "View rule details..."
+action) both apply a preset as a baseline that an input file or further manual edits then
+override. See `docs/DISA_STIG.md` for the bundled DISA STIG preset and why some source
+values (e.g. `FirefoxHome.Locked` casing) were corrected against Firefox's actual schema
+rather than copied verbatim from the STIG text.
 
 ## Testing conventions
 

@@ -12,18 +12,42 @@ Applying the preset gives you a compliant baseline; you then layer your own
 pop-up allowlist, a custom homepage) - the preset and manual configuration
 are meant to be combined, not either/or.
 
+## Profiles
+
+The STIG defines nine profiles - one per Mission Assurance Category (I/II/III)
+times confidentiality level (Classified/Public/Sensitive) - and all nine select
+the exact same 33 rules for this benchmark, so every profile below applies an
+identical set of values. Pick whichever matches your system's official
+designation for audit purposes:
+
+| Preset id | Profile |
+|---|---|
+| `disa_stig__mac_1_classified` | I - Mission Critical Classified |
+| `disa_stig__mac_1_public` | I - Mission Critical Public |
+| `disa_stig__mac_1_sensitive` | I - Mission Critical Sensitive |
+| `disa_stig__mac_2_classified` | II - Mission Support Classified |
+| `disa_stig__mac_2_public` | II - Mission Support Public |
+| `disa_stig__mac_2_sensitive` | II - Mission Support Sensitive |
+| `disa_stig__mac_3_classified` | III - Administrative Classified |
+| `disa_stig__mac_3_public` | III - Administrative Public |
+| `disa_stig__mac_3_sensitive` | III - Administrative Sensitive |
+
 ## Apply via CLI
 
 ```bash
-# See what the preset covers, including the items that need manual follow-up
+# See all profiles, including the items that need manual follow-up
 python -m ffpolicy presets
 
+# Full rule-by-rule description + recommendation for one profile
+python -m ffpolicy preset-info disa_stig__mac_1_classified
+
 # Preset only
-python -m ffpolicy generate --preset disa_stig -o policies.json --offline
+python -m ffpolicy generate --preset disa_stig__mac_1_classified -o policies.json --offline
 
 # Preset as a baseline, with your own input file layered on top (input wins
 # on any key both define) - this is the "preset + manual settings" workflow
-python -m ffpolicy generate my-overrides.yaml --preset disa_stig -o policies.json --offline
+python -m ffpolicy generate my-overrides.yaml \
+  --preset disa_stig__mac_1_classified -o policies.json --offline
 ```
 
 `my-overrides.yaml` only needs to contain the keys you want to add or change,
@@ -43,11 +67,32 @@ policies:
 
 ## Apply via GUI
 
-Menu bar → **Presets** → **Apply DISA STIG - Mozilla Firefox...**. You'll be
-asked to confirm (it overwrites any existing values for the policies it sets),
-then shown the 3 manual/procedural items that still need attention. Any policy
-form you have open at the time refreshes to show the newly-applied value, so
-you can immediately hand-tune something like `PopupBlocking.Allow`.
+Menu bar → **Presets** → **DISA STIG - Mozilla Firefox** submenu:
+
+- **View rule details...** opens a scrollable list of every rule with its
+  severity, the policy it sets, a description of what the setting does, and
+  the recommendation (identical across all nine profiles, since they share
+  one ruleset).
+- **Apply \<profile\>...** (one action per profile) asks for confirmation
+  (it overwrites any existing values for the policies it sets), applies the
+  values, then shows the 3 manual/procedural items that still need
+  attention. Any policy form you have open at the time refreshes to show the
+  newly-applied value, so you can immediately hand-tune something like
+  `PopupBlocking.Allow`.
+
+## Example: description and recommendation
+
+Every rule carries both a **description** (why the setting matters, from the
+STIG's vulnerability discussion) and a **recommendation** (what to actually
+set), shown by `preset-info` and the GUI's rule-details view:
+
+> **[V-251546, high] Firefox must be configured to allow only TLS 1.2 or above.**
+> Policy: `SSLVersionMin`
+> Description: Use of versions prior to TLS 1.2 are not permitted. SSL 2.0 and
+> SSL 3.0 contain a number of security flaws. These versions must be disabled
+> in compliance with the Network Infrastructure and Secure Remote Computing
+> STIGs.
+> Recommendation: Set SSLVersionMin to "tls1.2" (or "tls1.3").
 
 ## Rule -> policy mapping
 
@@ -87,6 +132,9 @@ you can immediately hand-tune something like `PopupBlocking.Allow`.
 | V-252881 | FFOX-00-000017 | medium | `SanitizeOnShutdown` | Firefox must be configured to not delete data upon shutdown. |
 | V-252909 | FFOX-00-000039 | medium | `DisableFirefoxStudies` | Firefox Studies must be disabled. |
 
+For the full description and recommendation behind every row, run
+`ffpolicy preset-info <preset id>` or open **View rule details...** in the GUI.
+
 ## The 3 manual/procedural items
 
 These can't be expressed as `policies.json` values at all, so no preset can
@@ -118,3 +166,13 @@ Where a single policy is set by multiple rules (`Preferences` by 6 rules;
 `EnableTrackingProtection` by 2), the preset stores one merged value combining
 all of them - applying the preset sets that whole merged object, not each
 rule's fragment independently.
+
+## Implementation notes
+
+Since all nine profiles share an identical ruleset for this benchmark, the
+bundled resource (`resources/presets/disa_stig.yaml`) stores the values/rules
+once and a `profiles` list of `{id, title}` pairs; `core/presets.py`'s
+`load_bundled_presets()` expands that into nine distinct `Preset` objects
+(sharing a `family` name for GUI/CLI grouping) rather than duplicating ~260
+lines of YAML nine times. A resource with no `profiles` key still loads as a
+single preset, so this is additive, not a requirement for future presets.

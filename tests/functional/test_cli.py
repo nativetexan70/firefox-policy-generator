@@ -94,16 +94,34 @@ def test_preview_prints_json_without_writing(valid_input):
     assert '"DisableTelemetry": true' in result.stdout
 
 
-def test_presets_command_lists_disa_stig():
+DISA_STIG_SAMPLE_ID = "disa_stig__mac_1_classified"
+
+
+def test_presets_command_lists_disa_stig_profiles():
     result = runner.invoke(app, ["presets"])
     assert result.exit_code == 0
-    assert "disa_stig" in result.stdout
-    assert "DISA STIG" in result.stdout
+    assert "DISA STIG - Mozilla Firefox" in result.stdout
+    assert DISA_STIG_SAMPLE_ID in result.stdout
+    assert "I - Mission Critical Classified" in result.stdout
     assert "V-251545" in result.stdout  # manual/procedural item is called out
 
 
+def test_preset_info_shows_description_and_recommendation():
+    result = runner.invoke(app, ["preset-info", DISA_STIG_SAMPLE_ID])
+    assert result.exit_code == 0
+    assert "V-251546" in result.stdout
+    assert "Description:" in result.stdout
+    assert "Recommendation:" in result.stdout
+    assert 'Set SSLVersionMin to "tls1.2"' in result.stdout
+
+
+def test_preset_info_unknown_preset_errors():
+    result = runner.invoke(app, ["preset-info", "not-a-real-preset"])
+    assert result.exit_code != 0
+
+
 def test_preview_with_preset_and_no_input_file():
-    result = runner.invoke(app, ["preview", "--preset", "disa_stig"])
+    result = runner.invoke(app, ["preview", "--preset", DISA_STIG_SAMPLE_ID])
     assert result.exit_code == 0
     assert '"DisableTelemetry": true' in result.stdout
     assert '"SSLVersionMin": "tls1.2"' in result.stdout
@@ -135,7 +153,15 @@ def test_generate_with_preset_and_manual_override(tmp_path):
 
     result = runner.invoke(
         app,
-        ["generate", str(override), "--preset", "disa_stig", "-o", str(output), "--offline"],
+        [
+            "generate",
+            str(override),
+            "--preset",
+            DISA_STIG_SAMPLE_ID,
+            "-o",
+            str(output),
+            "--offline",
+        ],
     )
 
     assert result.exit_code == 0, result.stdout

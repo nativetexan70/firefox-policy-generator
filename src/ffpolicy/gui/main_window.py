@@ -29,6 +29,7 @@ from ffpolicy.gui.category_tree import CategoryTree
 from ffpolicy.gui.extension_manager import ExtensionManager
 from ffpolicy.gui.form_builder import PolicyForm
 from ffpolicy.gui.json_preview import JsonPreview
+from ffpolicy.gui.preset_details import PresetDetailsDialog
 from ffpolicy.gui.style import APP_STYLESHEET
 from ffpolicy.gui.validation_panel import ValidationPanel
 from ffpolicy.models.policy_document import PolicyDocument
@@ -142,7 +143,13 @@ class MainWindow(QMainWindow):
         self._refresh_preview_and_validation()
 
     def _build_menu_bar(self) -> None:
+        # Submenus (and the actions/menus they own) must be kept as Python
+        # references - PySide6 can garbage-collect the wrapper object even
+        # though Qt's C++ side still parents it, leaving a "deleted" QMenu.
+        self._menu_refs: list[QWidget] = []
+
         presets_menu = self.menuBar().addMenu("&Presets")
+        self._menu_refs.append(presets_menu)
         presets = load_bundled_presets()
 
         if not presets:
@@ -150,9 +157,37 @@ class MainWindow(QMainWindow):
             no_presets_action.setEnabled(False)
             return
 
-        for preset in sorted(presets.values(), key=lambda p: p.name):
+        standalone = sorted(
+            (p for p in presets.values() if p.family is None), key=lambda p: p.name
+        )
+        families: dict[str, list[Preset]] = {}
+        for preset in presets.values():
+            if preset.family is not None:
+                families.setdefault(preset.family, []).append(preset)
+
+        for preset in standalone:
             action = presets_menu.addAction(f"Apply {preset.name}...")
             action.triggered.connect(lambda _checked=False, p=preset: self._on_apply_preset(p))
+
+        for family_name in sorted(families):
+            variants = sorted(families[family_name], key=lambda p: p.profile_id or "")
+            family_menu = presets_menu.addMenu(family_name)
+            self._menu_refs.append(family_menu)
+
+            details_action = family_menu.addAction("View rule details...")
+            details_action.triggered.connect(
+                lambda _checked=False, p=variants[0]: self._on_view_preset_details(p)
+            )
+            family_menu.addSeparator()
+
+            for variant in variants:
+                action = family_menu.addAction(f"Apply {variant.profile_title}...")
+                action.triggered.connect(
+                    lambda _checked=False, p=variant: self._on_apply_preset(p)
+                )
+
+    def _on_view_preset_details(self, preset: Preset) -> None:
+        PresetDetailsDialog(preset, self).exec()
 
     def _on_apply_preset(self, preset: Preset) -> None:
         confirmed = QMessageBox.question(

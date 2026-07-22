@@ -23,6 +23,8 @@ class PresetRule(BaseModel):
     severity: str
     title: str
     policy: str | None = None
+    description: str = ""
+    recommendation: str = ""
     note: str | None = None
 
 
@@ -33,6 +35,13 @@ class Preset(BaseModel):
     source: str
     values: dict[str, Any] = Field(default_factory=dict)
     rules: list[PresetRule] = Field(default_factory=list)
+    family: str | None = None
+    """Shared name across profile variants of the same underlying ruleset
+    (e.g. all nine DISA STIG Mission Assurance Category profiles), used to
+    group them together in menus. None for a preset with no profile variants.
+    """
+    profile_id: str | None = None
+    profile_title: str | None = None
 
     @property
     def manual_rules(self) -> list[PresetRule]:
@@ -44,14 +53,48 @@ class Preset(BaseModel):
         return [rule for rule in self.rules if rule.policy is not None]
 
 
+def _expand_profiles(data: dict[str, Any]) -> list[Preset]:
+    """Expand a preset document's `profiles` list into one Preset per profile,
+    all sharing the same values/rules - the profile only changes id/name/
+    description. Documents with no `profiles` key load as a single Preset.
+    """
+    profiles = data.get("profiles")
+    if not profiles:
+        return [Preset.model_validate(data)]
+
+    base_id = data["id"]
+    base_name = data["name"]
+    shared = {k: v for k, v in data.items() if k != "profiles"}
+
+    presets = []
+    for profile in profiles:
+        profile_id = profile["id"]
+        profile_title = profile["title"]
+        preset_data = {
+            **shared,
+            "id": f"{base_id}__{profile_id.lower().replace('-', '_')}",
+            "name": f"{base_name} ({profile_title})",
+            "family": base_name,
+            "profile_id": profile_id,
+            "profile_title": profile_title,
+        }
+        presets.append(Preset.model_validate(preset_data))
+    return presets
+
+
 def load_bundled_presets() -> dict[str, Preset]:
-    """Load every bundled preset from resources/presets/*.yaml, keyed by preset id."""
+    """Load every bundled preset from resources/presets/*.yaml, keyed by preset id.
+
+    A resource whose document defines a `profiles` list expands into one
+    Preset per profile (see `_expand_profiles`); one without expands to a
+    single Preset as-is.
+    """
     presets: dict[str, Preset] = {}
     for entry in importlib.resources.files(_PRESETS_PACKAGE).iterdir():
         if entry.name.endswith((".yaml", ".yml")):
             data = yaml.safe_load(entry.read_text(encoding="utf-8"))
-            preset = Preset.model_validate(data)
-            presets[preset.id] = preset
+            for preset in _expand_profiles(data):
+                presets[preset.id] = preset
     return presets
 
 
