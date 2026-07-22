@@ -1,11 +1,12 @@
 id: disa_stig
 name: DISA STIG - Mozilla Firefox
-description: 'DISA Security Technical Implementation Guide for Mozilla Firefox (Release
-  8, Benchmark Date: 01 Jul 2026). Values are taken from each rule''s official Linux
-  policies.json fix text, merged where multiple rules configure different keys of
-  the same policy (e.g. Preferences, EnableTrackingProtection).'
-source: https://cyber.mil (STIG.DOD.MIL) - MOZ_Firefox_STIG, Benchmark id MOZ_Firefox_STIG,
-  version 6
+description: 'DISA Security Technical Implementation Guide for Mozilla Firefox (Release 8, Benchmark Date:
+  01 Jul 2026). Values are taken from each rule''s official Linux policies.json fix text, merged where
+  multiple rules configure different keys of the same policy (e.g. Preferences, EnableTrackingProtection).
+  All nine Mission Assurance Category / confidentiality profiles select the same 33 rules for this benchmark,
+  so every profile below applies an identical set of values - pick the one matching your system''s official
+  designation for audit purposes.'
+source: https://cyber.mil (STIG.DOD.MIL) - MOZ_Firefox_STIG, Benchmark id MOZ_Firefox_STIG, version 6
 values:
   SSLVersionMin: tls1.2
   Preferences:
@@ -84,177 +85,319 @@ rules:
   severity: high
   policy: null
   title: The installed version of Firefox must be supported.
-  note: Not expressible in policies.json - upgrade to a vendor-supported release and
-    verify via Help > About Firefox.
+  description: Using versions of an application that are not supported by the vendor is not permitted.
+    Vendors respond to security flaws with updates and patches. These updates are not available for unsupported
+    versions, which can leave the application vulnerable to attack.
+  recommendation: Upgrade Firefox to a Mozilla-supported release; verify via Help > About Firefox.
+  note: Not expressible in policies.json - upgrade to a vendor-supported release and verify via Help >
+    About Firefox.
 - id: V-251546
   version: FFOX-00-000002
   severity: high
   policy: SSLVersionMin
   title: Firefox must be configured to allow only TLS 1.2 or above.
+  description: Use of versions prior to TLS 1.2 are not permitted. SSL 2.0 and SSL 3.0 contain a number
+    of security flaws. These versions must be disabled in compliance with the Network Infrastructure and
+    Secure Remote Computing STIGs.
+  recommendation: Set SSLVersionMin to "tls1.2" (or "tls1.3").
 - id: V-251547
   version: FFOX-00-000003
   severity: medium
   policy: Preferences
-  title: Firefox must be configured to ask which certificate to present to a website
-    when a certificate is required.
+  title: Firefox must be configured to ask which certificate to present to a website when a certificate
+    is required.
+  description: When a website asks for a certificate for user authentication, Firefox must be configured
+    to have the user choose which certificate to present. Websites within DOD require user authentication
+    for access, which increases security for DOD information. Access will be denied to the user if certificate
+    management is not configured.
+  recommendation: Set Preferences["security.default_personal_cert"] to "Ask Every Time", locked.
 - id: V-251548
   version: FFOX-00-000004
   severity: medium
   policy: Preferences
-  title: Firefox must be configured to not automatically check for updated versions
-    of installed search plugins.
+  title: Firefox must be configured to not automatically check for updated versions of installed search
+    plugins.
+  description: Updates must be controlled and installed from authorized and trusted servers. This setting
+    overrides a number of other settings that may direct the application to access external URLs.
+  recommendation: Set Preferences["browser.search.update"] to false, locked.
 - id: V-251549
   version: FFOX-00-000005
   severity: medium
   policy: ExtensionUpdate
-  title: Firefox must be configured to not automatically update installed add-ons
-    and plugins.
+  title: Firefox must be configured to not automatically update installed add-ons and plugins.
+  description: Set this to false to disable checking for updated versions of the Extensions/Themes. Automatic
+    updates from untrusted sites puts the enclave at risk of attack and may override security settings.
+  recommendation: Set ExtensionUpdate to false.
 - id: V-251550
   version: FFOX-00-000006
   severity: medium
   policy: null
-  title: Firefox must be configured to not automatically execute or download MIME
-    types that are not authorized for auto-download.
+  title: Firefox must be configured to not automatically execute or download MIME types that are not authorized
+    for auto-download.
+  description: Some files can be downloaded or execute without user interaction. This setting ensures
+    these files are not downloaded and executed.
+  recommendation: Remove any unauthorized MIME types from the browser's auto-download list.
   note: Organization-specific allowlist - not automated by this preset.
 - id: V-251551
   version: FFOX-00-000007
   severity: medium
   policy: DisableFormHistory
   title: Firefox must be configured to disable form fill assistance.
+  description: To protect privacy and sensitive data, Firefox provides the ability to configure the program
+    so that data entered into forms is not saved. This mitigates the risk of a website gleaning private
+    information from prefilled information.
+  recommendation: Set DisableFormHistory to true.
 - id: V-251552
   version: FFOX-00-000008
   severity: medium
   policy: PasswordManagerEnabled
-  title: Firefox must be configured to not use a password store with or without a
-    master password.
+  title: Firefox must be configured to not use a password store with or without a master password.
+  description: Firefox can be set to store passwords for sites visited by the user. These individual passwords
+    are stored in a file and can be protected by a master password. Autofill of the password can then
+    be enabled when the site is visited. This feature could also be used to autofill the certificate PIN,
+    which could lead to compromise of DoD information.
+  recommendation: Set PasswordManagerEnabled to false.
 - id: V-251553
   version: FFOX-00-000009
   severity: medium
   policy: PopupBlocking
   title: Firefox must be configured to block pop-up windows.
-  note: PopupBlocking.Allow (site allowlist) is optional and organization-specific
-    - not set by this preset.
+  description: Pop-up windows may be used to launch an attack within a new browser window with altered
+    settings. This setting blocks pop-up windows created while the page is loading.
+  recommendation: Set PopupBlocking.Default and PopupBlocking.Locked to true.
+  note: PopupBlocking.Allow (site allowlist) is optional and organization-specific - not set by this preset.
 - id: V-251554
   version: FFOX-00-000010
   severity: medium
   policy: Preferences
-  title: Firefox must be configured to prevent JavaScript from moving or resizing
-    windows.
+  title: Firefox must be configured to prevent JavaScript from moving or resizing windows.
+  description: JavaScript can make changes to the browser's appearance. This activity can help disguise
+    an attack taking place in a minimized background window. Configure the browser setting to prevent
+    scripts on visited websites from moving and resizing browser windows.
+  recommendation: Set Preferences["dom.disable_window_move_resize"] to true, locked.
 - id: V-251555
   version: FFOX-00-000011
   severity: medium
   policy: Preferences
-  title: Firefox must be configured to prevent JavaScript from raising or lowering
-    windows.
+  title: Firefox must be configured to prevent JavaScript from raising or lowering windows.
+  description: JavaScript can raise and lower browser windows to cause improper input. Configure the browser
+    setting to prevent scripts on visited websites from raising and lowering browser windows.
+  recommendation: Set Preferences["dom.disable_window_flip"] to true, locked.
 - id: V-251557
   version: FFOX-00-000013
   severity: medium
   policy: InstallAddonsPermission
   title: Firefox must be configured to disable the installation of extensions.
+  description: A browser extension is a program that has been installed into the browser to add functionality.
+    Extensions interact with the browser program itself and can bypass restrictions that apply to web
+    pages. If a browser is configured to allow unrestricted use of extensions, extensions can be loaded
+    and installed from malicious sources and used on the browser.
+  recommendation: Set InstallAddonsPermission.Default to false.
 - id: V-251558
   version: FFOX-00-000014
   severity: medium
   policy: DisableTelemetry
   title: Background submission of information to Mozilla must be disabled.
+  description: Firefox by default sends information about Firefox to Mozilla servers. There should be
+    no background submission of technical and other information from DoD computers to Mozilla with portions
+    posted publicly.
+  recommendation: Set DisableTelemetry to true.
 - id: V-251559
   version: FFOX-00-000015
   severity: low
   policy: DisableDeveloperTools
   title: Firefox development tools must be disabled.
+  description: Information needed by an attacker to begin looking for possible vulnerabilities in a web
+    browser includes any information about the web browser and plug-ins or modules being used. Debugging
+    or trace information can expose browser type, version, patches, and back ends used for data storage.
+  recommendation: Set DisableDeveloperTools to true.
 - id: V-251560
   version: FFOX-00-000016
   severity: medium
   policy: null
   title: Firefox must have the DOD root certificates installed.
+  description: The DOD root certificates will ensure that the trust chain is established for server certificates
+    issued from the DOD Certificate Authority (CA).
+  recommendation: Install the DOD root certificates via the OS certificate store, GPO "Import Enterprise
+    Roots", or the Certificates policy for CA files you manage directly.
   note: Certificate installation is an OS/GPO-level action, not a policies.json setting.
 - id: V-251562
   version: FFOX-00-000018
   severity: medium
   policy: DisableForgetButton
   title: Firefox must prevent the user from quickly deleting data.
+  description: There should not be an option for a user to "forget" work they have done. This is required
+    to meet nonrepudiation controls.
+  recommendation: Set DisableForgetButton to true.
 - id: V-251563
   version: FFOX-00-000019
   severity: medium
   policy: DisablePrivateBrowsing
   title: Firefox private browsing must be disabled.
+  description: Private browsing allows the user to browse the internet without recording their browsing
+    history/activity. From a forensics perspective, this is unacceptable. Best practice requires that
+    browser history is retained.
+  recommendation: Set DisablePrivateBrowsing to true.
 - id: V-251564
   version: FFOX-00-000020
   severity: medium
   policy: SearchSuggestEnabled
   title: Firefox search suggestions must be disabled.
+  description: Search suggestions must be disabled as this could lead to searches being conducted that
+    were never intended to be made.
+  recommendation: Set SearchSuggestEnabled to false.
 - id: V-251565
   version: FFOX-00-000021
   severity: low
   policy: Permissions
   title: Firefox autoplay must be disabled.
+  description: Autoplay allows the user to control whether videos can play automatically (without user
+    consent) with audio content. The user must be able to select content that is run within the browser
+    window.
+  recommendation: Set Permissions.Autoplay.Default to "block-audio-video".
 - id: V-251566
   version: FFOX-00-000022
   severity: medium
   policy: NetworkPrediction
   title: Firefox network prediction must be disabled.
+  description: If network prediction is enabled, requests to URLs are made without user consent. The browser
+    should always make a direct DNS request without prefetching occurring.
+  recommendation: Set NetworkPrediction to false.
 - id: V-251567
   version: FFOX-00-000023
   severity: medium
   policy: EnableTrackingProtection
   title: Firefox fingerprinting protection must be enabled.
+  description: Fingerprinting scripts collect information about browser and device configuration to create
+    a unique profile that can be used to track the user around the web. Tracking Protection stops Firefox
+    from loading such scripts from sites on Firefox's tracker lists.
+  recommendation: Set EnableTrackingProtection.Fingerprinting to true.
 - id: V-251568
   version: FFOX-00-000024
   severity: medium
   policy: EnableTrackingProtection
   title: Firefox cryptomining protection must be enabled.
+  description: Cryptomining scripts use a computer's central processing unit to invisibly mine cryptocurrency.
+    Tracking Protection stops Firefox from loading such scripts from sites on Firefox's tracker lists.
+  recommendation: Set EnableTrackingProtection.Cryptomining to true.
 - id: V-251569
   version: FFOX-00-000025
   severity: medium
   policy: Preferences
   title: Firefox Enhanced Tracking Protection must be enabled.
+  description: Tracking generally refers to content, cookies, or scripts that can collect browsing data
+    across multiple sites. It is detrimental for applications to provide, or install by default, functionality
+    exceeding requirements or mission objectives, as these unnecessary capabilities increase the attack
+    surface.
+  recommendation: Set Preferences["browser.contentblocking.category"] to "strict", locked.
 - id: V-251570
   version: FFOX-00-000026
   severity: medium
   policy: Preferences
   title: Firefox extension recommendations must be disabled.
+  description: The Recommended Extensions program makes it easier for users to discover extensions that
+    have been reviewed for security, functionality, and user experience. Allowed extensions are to be
+    centrally managed instead.
+  recommendation: Set Preferences["extensions.htmlaboutaddons.recommendations.enabled"] to false, locked.
 - id: V-251571
   version: FFOX-00-000027
   severity: medium
   policy: DisabledCiphers
   title: Firefox deprecated ciphers must be disabled.
+  description: A weak cipher is defined as an encryption/decryption algorithm that uses a key of insufficient
+    length. Using an insufficient key length opens up the possibility that the encryption scheme could
+    be broken.
+  recommendation: Add deprecated ciphers (e.g. TLS_RSA_WITH_3DES_EDE_CBC_SHA) to DisabledCiphers set to
+    true.
 - id: V-251572
   version: FFOX-00-000028
   severity: medium
   policy: UserMessaging
   title: Firefox must not recommend extensions as the user is using the browser.
+  description: The Recommended Extensions program recommends extensions to users as they surf the web.
+    The user must not be encouraged to install extensions from the websites they visit; allowed extensions
+    are to be centrally managed.
+  recommendation: Set UserMessaging.ExtensionRecommendations to false.
 - id: V-251573
   version: FFOX-00-000029
   severity: medium
   policy: FirefoxHome
-  title: The Firefox New Tab page must not show Top Sites, Sponsored Top Sites, Pocket
-    Recommendations, Sponsored Pocket Stories, Searches, Highlights, or Snippets.
+  title: The Firefox New Tab page must not show Top Sites, Sponsored Top Sites, Pocket Recommendations,
+    Sponsored Pocket Stories, Searches, Highlights, or Snippets.
+  description: The New Tab page by default shows a list of built-in top sites and the top sites the user
+    has visited. It is detrimental for applications to provide, or install by default, functionality exceeding
+    requirements or mission objectives; the new tab page must not actively show user activity.
+  recommendation: Set FirefoxHome Search/TopSites/SponsoredTopSites/Pocket/SponsoredPocket/Highlights/Snippets
+    to false and Locked to true.
 - id: V-251577
   version: FFOX-00-000033
   severity: medium
   policy: DNSOverHTTPS
   title: Firefox must be configured so that DNS over HTTPS is disabled.
+  description: DNS over HTTPS has generally not been adopted in the DoD; DNS is tightly controlled. It
+    is detrimental for applications to provide, or install by default, functionality exceeding requirements
+    or mission objectives.
+  recommendation: Set DNSOverHTTPS.Enabled to false.
 - id: V-251578
   version: FFOX-00-000034
   severity: medium
   policy: DisableFirefoxAccounts
   title: Firefox accounts must be disabled.
+  description: Disable Firefox Accounts integration (Sync). It is detrimental for applications to provide,
+    or install by default, functionality exceeding requirements or mission objectives.
+  recommendation: Set DisableFirefoxAccounts to true.
 - id: V-251580
   version: FFOX-00-000036
   severity: medium
   policy: DisableFeedbackCommands
   title: Firefox feedback reporting must be disabled.
+  description: Disable the menus for reporting sites (Submit Feedback, Report Deceptive Site). It is detrimental
+    for applications to provide, or install by default, functionality exceeding requirements or mission
+    objectives.
+  recommendation: Set DisableFeedbackCommands to true.
 - id: V-251581
   version: FFOX-00-000037
   severity: medium
   policy: EncryptedMediaExtensions
   title: Firefox encrypted media extensions must be disabled.
+  description: If "Enabled" is false, Firefox does not download encrypted media extensions (such as Widevine)
+    unless the user consents. If "Locked" is true and "Enabled" is false, Firefox will not download them
+    or ask the user to install them at all.
+  recommendation: Set EncryptedMediaExtensions.Enabled to false and Locked to true.
 - id: V-252881
   version: FFOX-00-000017
   severity: medium
   policy: SanitizeOnShutdown
   title: Firefox must be configured to not delete data upon shutdown.
+  description: For diagnostic purposes, data must remain behind when the browser is closed. This is required
+    to meet non-repudiation controls.
+  recommendation: Set SanitizeOnShutdown's data-type flags (Cache, Cookies, Downloads, FormData, History,
+    Sessions, SiteSettings, OfflineApps) to false and Locked to true, so data is retained rather than
+    cleared on shutdown.
 - id: V-252909
   version: FFOX-00-000039
   severity: medium
   policy: DisableFirefoxStudies
   title: Firefox Studies must be disabled.
+  description: Studies try out different features and ideas before they are released to all Firefox users.
+    Testing beta software is not in the DoD user's mission.
+  recommendation: Set DisableFirefoxStudies to true.
+profiles:
+- id: MAC-1_Classified
+  title: I - Mission Critical Classified
+- id: MAC-1_Public
+  title: I - Mission Critical Public
+- id: MAC-1_Sensitive
+  title: I - Mission Critical Sensitive
+- id: MAC-2_Classified
+  title: II - Mission Support Classified
+- id: MAC-2_Public
+  title: II - Mission Support Public
+- id: MAC-2_Sensitive
+  title: II - Mission Support Sensitive
+- id: MAC-3_Classified
+  title: III - Administrative Classified
+- id: MAC-3_Public
+  title: III - Administrative Public
+- id: MAC-3_Sensitive
+  title: III - Administrative Sensitive

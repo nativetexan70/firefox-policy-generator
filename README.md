@@ -33,8 +33,9 @@ Pass `--offline` to skip the live Mozilla schema sync and use the bundled fallba
 
 Bundled presets apply a known-good baseline in one step, then let you layer
 your own settings on top. See [`docs/DISA_STIG.md`](docs/DISA_STIG.md) for the
-DISA STIG (Mozilla Firefox) preset - `python -m ffpolicy presets` to list what's
-available, `--preset disa_stig` on `validate`/`generate`/`export`/`preview`, or
+DISA STIG (Mozilla Firefox) presets, one per compliance profile -
+`python -m ffpolicy presets` to list what's available, `--preset
+disa_stig__mac_1_classified` (etc.) on `validate`/`generate`/`export`/`preview`, or
 the GUI's Presets menu.
 
 ## Development

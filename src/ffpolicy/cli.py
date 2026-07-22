@@ -12,7 +12,7 @@ import yaml
 from ffpolicy.core.errors import ExportError, FfPolicyError
 from ffpolicy.core.generator import export_policies_json, render_policies_json
 from ffpolicy.core.paths import ExportTarget, resolve_export_path
-from ffpolicy.core.presets import apply_preset, load_bundled_presets, load_preset
+from ffpolicy.core.presets import Preset, apply_preset, load_bundled_presets, load_preset
 from ffpolicy.core.validator import IssueLevel, has_errors, validate_document
 from ffpolicy.fetchers.schema_sync import load_bundled_schema, sync_schema
 from ffpolicy.models.policy_document import PolicyDocument
@@ -28,7 +28,10 @@ InputFileArgument = Annotated[
 PresetOption = Annotated[
     str | None,
     typer.Option(
-        help="Apply a bundled preset (e.g. disa_stig) as a baseline before the input file"
+        help=(
+            "Apply a bundled preset id (see `ffpolicy presets`, "
+            "e.g. disa_stig__mac_1_classified) as a baseline before the input file"
+        )
     ),
 ]
 
@@ -184,24 +187,83 @@ def preview(
 
 @app.command(name="presets")
 def list_presets() -> None:
-    """List bundled configuration presets (e.g. DISA STIG baselines)."""
+    """List bundled configuration presets (e.g. DISA STIG profiles).
+
+    Presets sharing a `family` (e.g. the nine DISA STIG Mission Assurance
+    Category / confidentiality profiles) apply an identical ruleset - only
+    the id/name/profile differ - so they're grouped under one header.
+    """
     presets = load_bundled_presets()
     if not presets:
         typer.echo("No bundled presets found.")
         return
 
-    for preset in sorted(presets.values(), key=lambda p: p.id):
+    standalone = sorted(
+        (p for p in presets.values() if p.family is None), key=lambda p: p.id
+    )
+    families: dict[str, list[Preset]] = {}
+    for preset in presets.values():
+        if preset.family is not None:
+            families.setdefault(preset.family, []).append(preset)
+
+    for preset in standalone:
         typer.echo(f"{preset.id}  -  {preset.name}")
         typer.echo(f"  {preset.description}")
         typer.echo(f"  Source: {preset.source}")
+        _print_rule_summary(preset)
+        typer.echo("")
+
+    for family_name in sorted(families):
+        variants = sorted(families[family_name], key=lambda p: p.profile_id or "")
+        first = variants[0]
+        typer.echo(f"{family_name}")
+        typer.echo(f"  {first.description}")
+        typer.echo(f"  Source: {first.source}")
+        _print_rule_summary(first)
+        typer.echo("  Profiles:")
+        for variant in variants:
+            typer.echo(f"    {variant.id}  -  {variant.profile_title}")
         typer.echo(
-            f"  {len(preset.automated_rules)} rule(s) applied automatically, "
-            f"{len(preset.manual_rules)} require manual/procedural action"
+            "  Run `ffpolicy preset-info <id>` for the full rule-by-rule "
+            "description and recommendation for any profile above."
         )
-        for rule in preset.manual_rules:
-            typer.echo(f"    [{rule.id} {rule.severity}] {rule.title}")
-            if rule.note:
-                typer.echo(f"      -> {rule.note}")
+        typer.echo("")
+
+
+def _print_rule_summary(preset: Preset) -> None:
+    typer.echo(
+        f"  {len(preset.automated_rules)} rule(s) applied automatically, "
+        f"{len(preset.manual_rules)} require manual/procedural action"
+    )
+    for rule in preset.manual_rules:
+        typer.echo(f"    [{rule.id} {rule.severity}] {rule.title}")
+        if rule.note:
+            typer.echo(f"      -> {rule.note}")
+
+
+@app.command(name="preset-info")
+def preset_info(
+    preset_id: Annotated[str, typer.Argument(help="Preset id, e.g. from `ffpolicy presets`")],
+) -> None:
+    """Show every rule in a preset with its setting description and recommendation."""
+    try:
+        preset = load_preset(preset_id)
+    except KeyError as exc:
+        raise typer.BadParameter(str(exc)) from exc
+
+    typer.echo(f"{preset.name}")
+    typer.echo(f"{preset.description}")
+    typer.echo(f"Source: {preset.source}")
+    typer.echo("")
+
+    for rule in sorted(preset.rules, key=lambda r: r.id):
+        policy = rule.policy or "(manual/procedural - no policies.json setting)"
+        typer.echo(f"[{rule.id}] {rule.version}  severity={rule.severity}  policy={policy}")
+        typer.echo(f"  {rule.title}")
+        typer.echo(f"  Description: {rule.description}")
+        typer.echo(f"  Recommendation: {rule.recommendation}")
+        if rule.note:
+            typer.echo(f"  Note: {rule.note}")
         typer.echo("")
 
 
