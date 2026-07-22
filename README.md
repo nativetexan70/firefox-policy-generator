@@ -1,4 +1,4 @@
-# fedora-policy-generator
+# Firefox Policy Generator
 
 A desktop/CLI application to generate, validate, and export Firefox enterprise
 `policies.json` configurations. Ships as a PySide6 GUI, a headless CLI, and a
