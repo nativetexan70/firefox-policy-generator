@@ -126,20 +126,20 @@ rules:
       administrators. Use InstallAddonsPermission policy to prevent user installation.
       Maintain a curated whitelist of extensions that have been vetted for security.
 
-  - id: NIST-800-171-03.01.03
+  - id: NIST-800-171-03.01.02-alt
     version: "Rev. 3"
     severity: high
     policy: BlockAboutConfig
-    title: "03.01.03: Access Control - Privileged Access Restrictions"
+    title: "03.01.02: Access Control - Authorization Enforcement (Configuration)"
     description: >-
-      Restrict privileges to change software resident in organizational
-      information systems. Advanced Firefox configuration (about:config) access
+      Enforce approved authorizations for logical access to configuration and
+      system resources. Advanced Firefox configuration (about:config) access
       enables unauthorized modifications that could weaken security controls or
-      bypass organizational policies.
+      bypass organizational policies enforced via policies.json.
     recommendation: >-
-      Block access to about:config to prevent unauthorized configuration changes.
-      Lock security-critical preferences to prevent users from bypassing applied
-      policies or weakening security controls.
+      Block access to about:config to enforce that only approved configurations
+      (deployed via policies.json) can be active. Lock security-critical preferences
+      to prevent users from bypassing applied policies or weakening security controls.
 
   - id: NIST-800-171-03.01.05
     version: "Rev. 3"
@@ -174,16 +174,17 @@ rules:
     version: "Rev. 3"
     severity: high
     policy: PasswordManagerEnabled
-    title: "03.05.07: Identification & Authentication - Authenticator Management"
+    title: "03.05.07: Identification & Authentication - Password Management"
     description: >-
-      Secure authenticators and cryptographic keys against unauthorized disclosure
-      and modification. Firefox password manager stores passwords locally without
-      organizational oversight or policy enforcement; centralized credential
-      management is required for audit and revocation.
+      Enforce minimum password composition, complexity, and security requirements.
+      Firefox's local password manager stores passwords without organizational oversight,
+      policy enforcement, or audit trail; it cannot enforce complexity rules, rotation
+      policies, or breach detection required by 03.05.07 and NIST standards.
     recommendation: >-
       Disable Firefox password manager. Use organization-approved centralized
       credential vault (e.g., SSO provider, enterprise password manager) that
-      enforces password complexity policies, rotation, MFA, and audit logging.
+      enforces password composition, complexity, rotation policies, breach detection,
+      and maintains audit logs for all access and changes.
 
   - id: NIST-800-171-03.13.08
     version: "Rev. 3"
@@ -229,33 +230,36 @@ rules:
       restarts to apply critical security patches. Maintain detailed patching logs
       and audit trail for regulatory compliance verification.
 
-  - id: NIST-800-171-03.14.04
+  - id: NIST-800-171-03.14.06
     version: "Rev. 3"
     severity: high
     policy: EnableTrackingProtection
-    title: "03.14.04: System & Information Integrity - Information Monitoring"
+    title: "03.14.06: System & Information Integrity - System Monitoring"
     description: >-
-      Monitor and control information flows entering and exiting organizational
-      systems. Third-party tracking scripts and fingerprinting enable unauthorized
-      profiling and information collection about CUI system users; blocking these
-      prevents information exfiltration and unauthorized surveillance.
+      Monitor the system to detect attacks, indicators of potential attacks, and
+      unauthorized activities. Third-party tracking scripts and fingerprinting are
+      attack vectors that enable unauthorized profiling, information collection about
+      CUI system users, and information exfiltration. Blocking these is a form of
+      attack detection and system monitoring.
     recommendation: >-
       Enable and lock strong tracking protection (Cryptomining, Fingerprinting).
       Prevents invisible tracking scripts from profiling users and leaking
-      information about browsing behavior and system configuration.
+      information about browsing behavior and system configuration to attackers.
 
-  - id: NIST-800-171-03.14.07
+  - id: NIST-800-171-03.14.08
     version: "Rev. 3"
     severity: high
     policy: SanitizeOnShutdown
-    title: "03.14.07: System & Information Integrity - Information Retention"
+    title: "03.14.08: System & Information Integrity - Information Management and Retention"
     description: >-
-      Handle and retain CUI consistent with organizational requirements and legal
-      obligations. Clear sensitive browsing data on shutdown prevents CUI residue
-      (cache, cookies, history, sessions) from being accessed by other system
-      users or recovered via forensic analysis techniques.
+      Manage and retain CUI within the system and output from the system in
+      accordance with applicable laws, regulations, and organizational policies.
+      Clear sensitive browsing data on shutdown prevents CUI residue (cache, cookies,
+      history, sessions) from being accessed by other system users or recovered via
+      forensic analysis, ensuring proper information handling per retention policy.
     recommendation: >-
       Enable and lock SanitizeOnShutdown for cache, cookies, history, sessions,
       form data, and site settings. Automatically purge all sensitive data when
-      Firefox closes. Prevent users from disabling to ensure compliance.
+      Firefox closes. Prevent users from disabling to ensure compliance with
+      information retention and sanitization policies.
 

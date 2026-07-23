@@ -127,16 +127,16 @@ rules:
       strictly prevent user installation. Maintain a curated whitelist of only
       critical extensions vetted by the organization's security team.
 
-  - id: NIST-800-171-03.01.03
+  - id: NIST-800-171-03.01.02-alt
     version: "Rev. 3"
     severity: high
     policy: BlockAboutConfig
-    title: "03.01.03: Access Control - Privileged Access Restrictions"
+    title: "03.01.02: Access Control - Authorization Enforcement (Configuration)"
     description: >-
-      Restrict privileges to change software resident in organizational systems.
-      In high-impact CUI environments, advanced Firefox configuration (about:config)
-      access must be blocked to prevent any unauthorized modifications that could
-      weaken or bypass security controls.
+      Enforce approved authorizations for logical access to configuration and
+      system resources. In high-impact CUI environments, advanced Firefox configuration
+      (about:config) access must be completely blocked to prevent any unauthorized
+      modifications that could weaken or bypass organizational security controls.
     recommendation: >-
       Block access to about:config and lock security-critical preferences. Prevent
       users from bypassing applied policies or weakening security controls in any way.
@@ -173,16 +173,17 @@ rules:
     version: "Rev. 3"
     severity: high
     policy: PasswordManagerEnabled
-    title: "03.05.07: Identification & Authentication - Authenticator Management"
+    title: "03.05.07: Identification & Authentication - Password Management"
     description: >-
-      Secure authenticators and cryptographic keys against unauthorized access.
-      Firefox password manager offers no organizational audit or revocation
-      capabilities; centralized credential management is mandatory for high-impact
-      CUI systems.
+      Enforce strict password composition, complexity, strength, and change
+      frequency requirements. Firefox's local password manager offers no organizational
+      oversight, policy enforcement, or audit trail; centralized credential management
+      with full compliance verification is mandatory for high-impact CUI systems.
     recommendation: >-
       Disable Firefox password manager entirely. Use organization's centralized
-      credential vault with enforced complexity, rotation policies, MFA, and
-      comprehensive audit logging for compliance.
+      credential vault with enforced password composition, complexity, rotation
+      policies, breach monitoring, MFA, and comprehensive audit logging for full
+      compliance verification.
 
   - id: NIST-800-171-03.13.08
     version: "Rev. 3"
@@ -226,31 +227,33 @@ rules:
       restarts for critical patches. Maintain detailed audit logs of all updates
       for compliance verification and incident response.
 
-  - id: NIST-800-171-03.14.04
+  - id: NIST-800-171-03.14.06
     version: "Rev. 3"
     severity: high
     policy: EnableTrackingProtection
-    title: "03.14.04: System & Information Integrity - Information Monitoring"
+    title: "03.14.06: System & Information Integrity - System Monitoring"
     description: >-
-      Monitor and control information flows in and out of systems processing
-      high-impact CUI. Tracking scripts and fingerprinting enable unauthorized
-      profiling; these must be blocked to prevent information exfiltration.
+      Monitor the system to detect attacks, indicators of potential attacks, and
+      unauthorized activities. In high-impact CUI environments, tracking scripts
+      and fingerprinting are sophisticated attack vectors that enable unauthorized
+      profiling and information exfiltration; these must be completely blocked.
     recommendation: >-
       Enable and lock strong tracking protection (Cryptomining, Fingerprinting).
       Prevent all invisible tracking scripts from profiling CUI system users and
-      leaking information about activities and system configuration.
+      leaking information about activities and system configuration to attackers.
 
-  - id: NIST-800-171-03.14.07
+  - id: NIST-800-171-03.14.08
     version: "Rev. 3"
     severity: high
     policy: SanitizeOnShutdown
-    title: "03.14.07: System & Information Integrity - Information Retention"
+    title: "03.14.08: System & Information Integrity - Information Management and Retention"
     description: >-
-      Handle and retain CUI consistent with organizational requirements. Clear
-      sensitive browsing data on shutdown to prevent high-impact CUI residue
-      (cache, cookies, history) from being accessed by other users or recovered
-      via forensic analysis.
+      Manage and retain CUI strictly in accordance with organizational requirements
+      and legal obligations. For high-impact CUI systems, clear all sensitive
+      browsing data on shutdown to prevent residue (cache, cookies, history,
+      sessions) from being accessed by other users or recovered via forensic analysis.
     recommendation: >-
       Enable and lock SanitizeOnShutdown for all data types (cache, cookies,
-      history, sessions, form data, site settings). Automatically purge all
-      sensitive data on Firefox close. Prevent users from disabling.
+      history, sessions, form data, site settings, offline app data). Automatically
+      and completely purge all sensitive data on Firefox close. Prevent users from
+      disabling to ensure full compliance with retention and sanitization policies.
