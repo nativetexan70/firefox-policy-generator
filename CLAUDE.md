@@ -91,9 +91,17 @@ name relevance (`fetchers/amo_client.rank_by_name_relevance`), and an always-vis
 manual-entry row (GUID/mode/install URL) covers rate-limiting, a restricted network, or
 an add-on that simply isn't on AMO. A third path, "Add from an addons.mozilla.org link",
 covers pasting a listing URL directly (e.g. `.../firefox/addon/bitwarden-password-manager/`):
-`amo_client.parse_addon_slug_from_url` extracts the slug and `get_addon_detail` fetches
-its GUID/name/current install URL, so no search round-trip is needed - same failure
-handling (rate-limit / lookup-failure messages pointing back at manual entry) as search.
+`amo_client.get_addon_detail_from_page` fetches that exact page and extracts the addon's
+GUID/name/current install URL from the `redux-store-state` JSON its React/Redux frontend
+embeds server-side - the same data the JSON API would return, but sourced from the page
+itself rather than the separate `api/v5` endpoint (which some networks block
+independently of the page - this is the primary path specifically because of that).
+Falls back to `amo_client.get_addon_detail` (the `api/v5/addons/addon/{id|slug}/`
+endpoint, by parsed slug) if the page's embedded state can't be found/parsed - same
+failure handling (rate-limit / lookup-failure messages pointing back at manual entry) as
+search. Note AMO's API always returns translatable fields (`name`, ...) as a
+`{locale: value}` object - even with `?lang=` narrowing which locales are included - so
+`AmoAddon.name` normalizes that shape rather than assuming a plain string.
 
 **Validation** (`core/validator.validate_document`) runs up to three independent layers
 and returns a flat `list[ValidationIssue]`: JSON-Schema validation (when a raw JSON

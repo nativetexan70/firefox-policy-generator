@@ -336,14 +336,18 @@ policies fall into an **"Uncategorized"** bucket so nothing is ever hidden.
 `gui/extension_manager.py`: a search box + button, a results list (double-click
 to add); an **"Add from an addons.mozilla.org link"** row - paste a listing URL
 (e.g. `.../firefox/addon/bitwarden-password-manager/`) and it resolves straight
-to GUID/install URL via `amo_client.parse_addon_slug_from_url` +
-`get_addon_detail`, no search needed; a **manual-entry row** (GUID / mode /
-install URL / Add - always available, independent of whether search or the
-link lookup works); and a configured-extensions table: *GUID · Mode · Install
-URL · Remove*, with column resize modes tuned so Mode and Remove don't collapse
-to unreadable slivers (`Interactive` with explicit initial widths, not
-`ResizeToContents` - that mode doesn't reliably re-measure widget-based cells
-added after the table is first laid out).
+to GUID/name/install URL via `amo_client.get_addon_detail_from_page` (scrapes
+the `redux-store-state` JSON the page itself embeds - works off the exact page
+the user has, and doesn't depend on the separate `api/v5` endpoint some
+networks block independently of the page), falling back to
+`get_addon_detail` (the `api/v5/addons/addon/{id|slug}/` endpoint) if that
+fails; a **manual-entry row** (GUID / mode / install URL / Add - always
+available, independent of whether search or the link lookup works); and a
+configured-extensions table: *GUID · Mode · Install URL · Remove*, with column
+resize modes tuned so Mode and Remove don't collapse to unreadable slivers
+(`Interactive` with explicit initial widths, not `ResizeToContents` - that
+mode doesn't reliably re-measure widget-based cells added after the table is
+first laid out).
 
 ### 4.4 Presets menu (added after the original plan - see §9)
 

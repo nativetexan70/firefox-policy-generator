@@ -11,6 +11,11 @@ from urllib3.util import Retry
 
 DEFAULT_TIMEOUT = 15
 
+# Some hosts (notably addons.mozilla.org's CDN) reject the default
+# "python-requests/X.Y" User-Agent as a bot signature. A descriptive,
+# identifiable UA avoids that without pretending to be a browser.
+USER_AGENT = "ffpolicy/1.0 (+https://github.com/nativetexan70/firefox-policy-generator)"
+
 
 @dataclass
 class FetchResult:
@@ -22,6 +27,7 @@ class FetchResult:
 
 def build_session(*, retries: int = 3, backoff_factor: float = 0.5) -> requests.Session:
     session = requests.Session()
+    session.headers["User-Agent"] = USER_AGENT
     retry = Retry(
         total=retries,
         backoff_factor=backoff_factor,
