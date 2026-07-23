@@ -3,7 +3,8 @@
 > A Python desktop/CLI application that generates, validates, and manages Firefox
 > enterprise `policies.json` configurations, packaged as a standalone Linux AppImage.
 
-**Status:** Implemented (Phases 0-6 below, plus compliance presets added after PR #4/#5)
+**Status:** Implemented (Phases 0-8 below - compliance presets added after PR #4/#5,
+Linux export/import/AI-policies/description-panel work added through PR #14)
 **Target platforms:** Linux (primary, AppImage), portable to macOS/Windows
 **Language:** Python 3.11+
 
@@ -42,7 +43,7 @@ thing ships as a self-contained AppImage.
 ### 1.1 Module structure (as built)
 
 ```
-fedora-policy-generator/
+firefox-policy-generator/
 ├── src/
 │   └── ffpolicy/
 │       ├── __init__.py
@@ -55,7 +56,9 @@ fedora-policy-generator/
 │       │   ├── generator.py       # Assemble policies dict → policies.json
 │       │   ├── validator.py       # jsonschema validation + custom rules
 │       │   ├── version_check.py   # Firefox min/max version compatibility
-│       │   ├── paths.py           # Standard policy install-path resolution
+│       │   ├── paths.py           # ExportTarget locations + resolve/discover
+│       │   ├── privilege.py       # pkexec/sudo-escalated writes for root-owned targets
+│       │   ├── importer.py        # Parse an existing policies.json -> PolicyDocument
 │       │   ├── presets.py         # Preset/PresetRule models, apply_preset()
 │       │   └── errors.py          # Typed exceptions (ExportError, etc.)
 │       │
@@ -68,17 +71,20 @@ fedora-policy-generator/
 │       │
 │       ├── fetchers/              # Network + caching layer
 │       │   ├── __init__.py
-│       │   ├── base.py            # HTTP client w/ retry, timeout, ETag cache
+│       │   ├── base.py            # HTTP client w/ retry, timeout, ETag cache, UA
 │       │   ├── schema_sync.py     # Mozilla policy-templates fetch + parse
-│       │   ├── amo_client.py      # addons.mozilla.org API v5 client
+│       │   ├── amo_client.py      # addons.mozilla.org API v5 client + page scraper
 │       │   └── cache.py           # On-disk cache (XDG dirs) + TTL
 │       │
 │       ├── gui/                   # PySide6 UI — depends on core/models only
 │       │   ├── __init__.py
 │       │   ├── main_window.py     # QMainWindow, menu bar, splitter, footer
 │       │   ├── category_tree.py   # Left nav: policy categories
+│       │   ├── policy_description.py # Description + security/privacy impact panel
 │       │   ├── form_builder.py    # Schema → dynamic QWidget forms
-│       │   ├── extension_manager.py  # AMO search + manual entry + table
+│       │   ├── extension_manager.py  # AMO search + link paste + manual entry + table
+│       │   ├── export_target_dialog.py # Standard-location export (mirrors CLI --target)
+│       │   ├── import_source_dialog.py # Standard-location import (mirrors CLI discover/import)
 │       │   ├── json_preview.py    # Live syntax-highlighted preview
 │       │   ├── validation_panel.py
 │       │   ├── preset_details.py  # Rule-by-rule description/recommendation dialog
@@ -88,7 +94,7 @@ fedora-policy-generator/
 │       │       └── field_widgets.py  # Reusable field editors (bool/string/enum/…)
 │       │
 │       ├── resources/            # Bundled non-code assets
-│       │   ├── schema_backup.json # Offline fallback schema (31 policies)
+│       │   ├── schema_backup.json # Offline fallback schema (34 policies)
 │       │   ├── categories.yaml    # Category → policy grouping map
 │       │   ├── presets/
 │       │   │   └── disa_stig.yaml # DISA STIG baseline, expands to 9 profile presets
@@ -187,6 +193,7 @@ class PolicyDefinition(BaseModel):
     name: str                                # e.g. "ExtensionSettings"
     category: str = "Uncategorized"          # from categories.yaml
     description: str | None = None
+    security_privacy_impact: str | None = None  # curated, None where n/a (§2.3)
     min_firefox_version: int | None = None
     max_firefox_version: int | None = None
     root_field: PolicyField                  # tree describing the value shape
@@ -220,8 +227,14 @@ class PolicyDocument(BaseModel):
   `load_bundled_schema()` skips the network entirely for `--offline` CLI runs
   and tests.
 
-The bundled schema currently covers **31 policies** (started at 11 in Phase 1;
-grew to cover every policy the DISA STIG preset needed - see §9).
+The bundled schema currently covers **34 policies** (started at 11 in Phase 1;
+grew to cover every policy the DISA STIG preset needed - see §9 - then further
+with `IPProtectionAvailable`, `AIControls`, and `GenerativeAI` as Firefox
+shipped those features). Each `PolicyDefinition` also carries an optional
+`security_privacy_impact` string (rendered in the GUI per §4.5, item 1)
+alongside the plain-language `description`, populated for 29 of the 34 - the
+remaining 5 are purely cosmetic (`Homepage`, `FirefoxHome`,
+`DisplayBookmarksToolbar`, `DisableFeedbackCommands`, `UserMessaging`).
 
 ### 2.4 Dynamic form generation mapping
 
@@ -249,10 +262,25 @@ triggering revalidation and a live JSON-preview refresh (debounced 150 ms via
 
 ### 3.1 Endpoint integration
 
-- **Search:** `GET https://addons.mozilla.org/api/v5/addons/search/?q={query}&app=firefox&type=extension`
-- **Detail:** `GET https://addons.mozilla.org/api/v5/addons/addon/{id_or_slug}/`
-- `parse_addon_slug_from_url()` exists in `amo_client.py` for parsing an AMO
-  page URL into a slug, but isn't yet wired into the GUI search flow.
+- **Search:** `GET https://addons.mozilla.org/api/v5/addons/search/?q={query}&app=firefox&type=extension&lang=en-US`
+- **Detail:** `GET https://addons.mozilla.org/api/v5/addons/addon/{id_or_slug}/?lang=en-US`
+- **Page scrape:** `GET` the addon's listing page itself (e.g. `.../firefox/
+  addon/bitwarden-password-manager/`) and parse the `redux-store-state`
+  `<script type="application/json">` its React/Redux frontend embeds -
+  `addons.byID`/`bySlug` + `versions.byId`, the same data the JSON API
+  returns. `parse_addon_slug_from_url()` extracts the slug from a pasted URL
+  either way.
+- A shared, identifying `User-Agent` (`fetchers/base.build_session`) is sent
+  on every request - a default `python-requests/X.Y` UA is a common
+  bot-blocking signature on APIs/CDNs, AMO's included.
+
+**Real bug fixed after initial ship:** `lang=` narrows which locale AMO
+includes for translatable fields, but per addons-server's own docs the
+response is *always* an object (`{"name": {"en-US": "..."}}`), never a bare
+string - it does not flatten. `AmoAddon.name` normalizes that shape (prefers
+`_default`'s locale, then `en-US`/`en`, then whatever's present) rather than
+assuming a plain string, which is what the page-scrape path returns directly
+without needing normalization.
 
 Fields extracted for `ExtensionSettings`:
 
@@ -289,6 +317,12 @@ Validation rule: `force_installed`/`normal_installed` **must** carry a valid
   entry row** (GUID + installation mode + optional install URL) rather than a
   dead end - this was added after the original search-only design left no
   path forward when `addons.mozilla.org` is unreachable.
+- A third path, **paste an AMO listing URL**, tries the page scrape first
+  (`get_addon_detail_from_page`) and falls back to the `api/v5` detail
+  endpoint (`get_addon_detail`, by parsed slug) on any failure - the page
+  scrape is primary specifically because some networks block the separate
+  API subdomain/path independently of the listing page itself. Both failure
+  modes degrade to the same manual-entry row as search.
 
 ---
 
@@ -298,20 +332,21 @@ Validation rule: `force_installed`/`normal_installed` **must** carry a valid
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
-│  Presets                                                          │
+│  File          Presets                                            │
 ├───────────────┬────────────────────────────┬─────────────────────┤
 │ CATEGORIES    │  POLICY EDITOR              │  JSON PREVIEW        │
 │ ───────────── │  ─────────────────────────  │  ───────────────    │
-│ ▸ Security    │  [dynamic form for the      │  {                  │
-│ ▸ Extensions  │   selected policy, built    │    "policies": {    │
-│ ▸ UI/Bookmarks│   from schema; or the       │      ...            │
-│ ▸ Privacy/Net │   Extension Manager for     │    }                │
-│ ▸ Updates     │   ExtensionSettings]        │  }                  │
-│ ▸ Custom Prefs│                             │  (syntax-highl.)    │
+│ ▸ Security    │  [description + security/   │  {                  │
+│ ▸ Extensions  │   privacy impact panel,     │    "policies": {    │
+│ ▸ UI/Bookmarks│   then a dynamic form for   │      ...            │
+│ ▸ Privacy/Net │   the selected policy; or   │    }                │
+│ ▸ Updates     │   the Extension Manager     │  }                  │
+│ ▸ AI Controls │   for ExtensionSettings]    │  (syntax-highl.)    │
+│ ▸ Custom Prefs│                             │                     │
 ├───────────────┴────────────────────────────┴─────────────────────┤
 │  ✓ valid              [footer bar]      [Export policies.json]   │
 └──────────────────────────────────────────────────────────────────┘
-Schema: bundled · 31 policies                          [status bar]
+Schema: bundled · 34 policies                          [status bar]
 ```
 
 The window is a **fixed, non-resizable 1600×900**, centered on the primary
@@ -319,10 +354,12 @@ screen - sized for a 1920×1080 (FHD) display with room for OS
 decorations/taskbars, rather than freely resizable as the original plan
 implied. A shared QSS stylesheet (`gui/style.py`) gives the whole app a flat,
 modern look (rounded inputs/buttons, a primary-colored Export button,
-color-coded validation status). The originally-planned `File`/`Edit`/
-`Schema(Sync)`/`Export`/`Help` menus were never built; the one menu that
-exists is **Presets** (see §4.3 and §9) - schema sync happens automatically at
-startup and export is a footer-bar button, not a menu action or dialog.
+color-coded validation status). The originally-planned `Edit`/`Schema(Sync)`/
+`Help` menus were never built; the menus that exist are **File** (added
+later - standard-location export/import, §4.5) and **Presets** (see §4.4 and
+§9) - schema sync happens automatically at startup, and the footer-bar
+"Export policies.json" button remains a quick file-dialog "save as"
+alongside File → "Export to standard location...".
 
 ### 4.2 Categories (`resources/categories.yaml`)
 
@@ -508,25 +545,39 @@ both GUI (panel) and CLI (exit code) consume the same output.
 
 - `test_generator.py`, `test_validator.py`, `test_version_check.py` - core logic.
 - `test_resources.py` - bundled `schema_backup.json`/`categories.yaml` parse
-  and stay consistent with each other.
+  and stay consistent with each other, plus spot-checks that high-impact
+  policies carry `security_privacy_impact` text and purely cosmetic ones don't.
 - `test_schema_sync.py`, `test_amo_client.py` - fetchers, HTTP mocked via
-  `responses`; includes the name-relevance ranking behavior.
+  `responses`; includes the name-relevance ranking behavior, the page-scrape
+  path (`get_addon_detail_from_page`), and the translated-field name
+  normalization.
 - `test_presets.py` - preset loading/expansion (all nine DISA STIG profiles
   share values/rules), `apply_preset()` merge semantics, description/
   recommendation fields.
-- `test_gui.py` - `pytest-qt`; form population, live preview, extension
-  manager (including the manual-entry fallback), Presets menu structure,
-  `PresetDetailsDialog`.
+- `test_gui.py` - `pytest-qt`; form population, live preview, the
+  `PolicyDescriptionPanel` above every editor, extension manager (including
+  the manual-entry fallback), the File menu's standard-location export/import
+  dialogs, Presets menu structure, `PresetDetailsDialog`.
+- `test_extension_manager.py`, `test_export_import_dialogs.py`,
+  `test_policy_description.py` - focused widget-level tests for the extension
+  manager's link-paste flow, the export/import dialogs (including a
+  regression test for a `QComboBox`/`QVariant` enum-coercion bug), and the
+  description panel's three render states (description+impact, description
+  only, impact only).
 
 ### 6.3 Functional tests (`tests/functional/`)
 
-- `test_export_paths.py` - path resolution for all three targets, the
-  overwrite guard, and an OS-level write failure.
+- `test_export_paths.py` - path resolution for every `ExportTarget` (the
+  per-distro Linux locations, snap, Flatpak system/user, `distribution/`,
+  `custom`), the overwrite guard, an OS-level write failure, and the
+  pkexec/sudo privilege-escalation retry (mocked subprocess).
+- `test_import.py` - `discover_installed_policies()`/`import_policies_json()`
+  against real and malformed `policies.json` shapes.
 - `test_golden.py` - `render_policies_json()`'s determinism against
   `tests/fixtures/golden/sample_policies.json`.
-- `test_cli.py` - `validate`/`generate`/`export`/`preview`/`presets`/
-  `preset-info`, including the preset-as-baseline + input-file-as-override
-  workflow.
+- `test_cli.py` - `validate`/`generate`/`export`/`discover`/`import`/
+  `preview`/`presets`/`preset-info`, including the preset-as-baseline +
+  input-file-as-override workflow.
 
 ### 6.4 Golden-file discipline
 
@@ -534,8 +585,8 @@ Canonical `policies.json` output lives in `tests/fixtures/golden/`.
 Regenerate intentionally via `make update-golden` and review the diff in the
 PR - this is the safety net for the deterministic-output guarantee.
 
-**Current test count: 72 passing** (`ruff`, `mypy`, and `lint-imports` all
-clean as of PR #5).
+**Current test count: 141 passing** (`ruff`, `mypy`, and `lint-imports` all
+clean as of PR #14).
 
 ---
 
@@ -563,7 +614,8 @@ clean as of PR #5).
 
 ### Phase 3 — CLI ✅
 - [x] `cli.py`: `validate`/`generate`/`export`/`preview`, plus `presets`/
-      `preset-info` (added for compliance presets, §9).
+      `preset-info` (added for compliance presets, §9), and `discover`/
+      `import` (added in Phase 8, §7).
 - [x] **Milestone:** headless end-to-end usable in config-management pipelines.
 
 ### Phase 4 — GUI ✅
@@ -571,7 +623,8 @@ clean as of PR #5).
 - [x] `form_builder` (schema → widgets) + field widgets.
 - [x] Extension manager + validation panel + export button.
 - [x] Menu bar with a Presets menu (not part of the original plan's File/Edit/
-      Schema/Export/Help design - see §9).
+      Schema/Export/Help design - see §9; a File menu was added later in
+      Phase 8 for standard-location export/import).
 - [x] Fixed 1600×900 window sized for FHD displays; shared QSS stylesheet.
 - [x] **Milestone:** full visual build-validate-export loop.
 
@@ -615,6 +668,41 @@ clean as of PR #5).
       Mozilla's current reference docs (6 of the original 11 bundled
       policies had wrong version numbers, one off by 49 versions).
 
+### Phase 8 — Linux export/import, new policies, and description panel ✅
+(added after the original plan, PRs #7-#14)
+- [x] Expanded `ExportTarget` from 3 to 10 locations: the per-distro
+      `distribution/` install dirs (Fedora/RHEL `lib64`, Debian/Ubuntu `lib`,
+      `firefox-esr`, `/opt` manual-tarball installs), the Firefox snap (same
+      `/etc` path as `system_linux`, since its install dir is read-only), and
+      the Flatpak system-config extension mount point (system-wide and
+      per-user, architecture-qualified).
+- [x] `core/privilege.py`: opt-in `pkexec`/`sudo` retry
+      (`allow_privilege_escalation=True` / CLI `--elevate` / GUI checkbox) for
+      the root-owned targets, rather than failing outright or auto-escalating.
+- [x] `core/importer.py` + `discover_installed_policies()`: `ffpolicy
+      discover`/`import` (and the GUI's File → "Import existing
+      policies.json..." dialog) find and parse an already-deployed
+      policies.json back into an editable input file.
+- [x] GUI File menu added (previously only Presets existed): "Export to
+      standard location..." and "Import existing policies.json..." mirror the
+      CLI one-for-one, alongside the existing footer "save as" button.
+- [x] New policies: `IPProtectionAvailable` (Firefox's built-in VPN,
+      150+), `AIControls` and `GenerativeAI` (generative-AI feature kill
+      switches, 150+/148+ respectively) under a new **AI Controls** category.
+- [x] Extension manager: paste-an-AMO-link support
+      (`get_addon_detail_from_page`, page-scrape-first with an `api/v5`
+      fallback) - and, after an initial version silently failed against the
+      real API, fixed two real bugs found from a user-supplied page capture:
+      AMO's translatable fields are never bare strings (`AmoAddon.name`
+      normalization) and a default `python-requests` User-Agent gets blocked
+      (shared identifying UA in `fetchers/base.py`).
+- [x] `gui/policy_description.PolicyDescriptionPanel`: every policy's editor
+      now shows its description and, where applicable, a curated security/
+      privacy impact note (`PolicyDefinition.security_privacy_impact`).
+- [x] **Milestone:** the CLI and GUI now cover the same ground end-to-end -
+      export to (and import from) every standard Firefox policy location on
+      Linux, with privilege escalation handled consistently in both.
+
 ---
 
 ## 8. Data Accuracy Note
@@ -631,6 +719,20 @@ That pass found and fixed:
 - A missing `StartPage` enum value (`homepage-locked`) on `Homepage`.
 
 The same pass is what surfaced the Phase 2 schema-sync issue in §2.1/§7.
+
+**Later additions (Phase 8, §7):** `IPProtectionAvailable`, `AIControls`, and
+`GenerativeAI` were sourced directly from Mozilla's live
+`browser/components/enterprisepolicies/schemas/policies-schema.json` and
+cross-checked against independent secondary sources (Bugzilla, tech press
+covering the GenAI kill switch), since `firefox-admin-docs.mozilla.org` and
+even `raw.githubusercontent.com/mozilla-firefox/...` aren't consistently
+reachable from every environment either. The AMO page-scrape fix (§3.1) is a
+similar case: a user supplied an actual saved AMO page (`wget` output) after
+this sandbox's egress policy turned out to block `addons.mozilla.org`
+entirely - ground truth from a real artifact, not a live fetch, resolved a bug
+that guesswork alone would have gotten wrong (the initial fix assumed `lang=`
+flattens translated fields to a string; addons-server's own docs say
+otherwise).
 
 ---
 

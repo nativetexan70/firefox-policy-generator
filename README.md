@@ -99,6 +99,31 @@ python -m ffpolicy generate --preset disa_stig__mac_1_classified -o policies.jso
 
 or apply one from the GUI's Presets menu.
 
+### GUI features
+
+Beyond the build-validate-export loop (category tree → policy form → live
+JSON preview → footer validation/export), the GUI's **File** menu covers the
+same ground as the CLI's `export --target`/`discover`/`import`:
+
+- **Export to standard location...** - pick any of the targets from the table
+  above (or a custom path); the resolved path and whether it needs elevated
+  privileges update live, with an "elevate" checkbox for the pkexec/sudo retry.
+- **Import existing policies.json...** - lists policies.json files already
+  found at standard locations on this machine, or browse to an explicit path;
+  loads it into the current document for re-tuning and re-exporting.
+
+Every policy's editor shows a description of what the setting does and,
+where applicable, a **Security & Privacy Impact** note above the form -
+e.g. `ExtensionSettings` controls the browser's biggest attack surface,
+`SSLVersionMin` prevents protocol downgrade.
+
+The Extensions category's manager offers three ways to add an extension:
+search AMO by name, paste an addons.mozilla.org listing URL directly (e.g.
+`https://addons.mozilla.org/en-US/firefox/addon/bitwarden-password-manager/`)
+to resolve its GUID/install URL automatically, or enter the GUID/mode/install
+URL by hand - the manual row is always available as a fallback if AMO is
+unreachable.
+
 ## Development
 
 ```bash
