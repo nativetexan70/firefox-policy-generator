@@ -50,6 +50,9 @@ values:
     browser.contentblocking.category:
       Value: strict
       Status: locked
+    extensions.htmlaboutaddons.recommendations.enabled:
+      Value: false
+      Status: locked
   EnableTrackingProtection:
     Cryptomining: true
     Fingerprinting: true
@@ -87,6 +90,11 @@ values:
     SponsoredPocket: false
     Highlights: false
     Snippets: false
+    Locked: true
+
+  # Pop-up Protection (from DISA STIG)
+  PopupBlocking:
+    Default: true
     Locked: true
 
   # Permissions - CUI-High: stricter defaults
