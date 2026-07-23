@@ -24,6 +24,7 @@ from PySide6.QtWidgets import (
 from ffpolicy.fetchers.amo_client import (
     AmoRateLimitedError,
     get_addon_detail,
+    get_addon_detail_from_page,
     parse_addon_slug_from_url,
     search_extensions,
 )
@@ -167,18 +168,30 @@ class ExtensionManager(QWidget):
             )
             return
 
+        # Scrape the page itself first: it's the exact URL the user gave us,
+        # and doesn't depend on the separate api/v5 endpoint (which some
+        # networks block independently of the page). Fall back to that API
+        # on any failure (page unreachable, embedded data not found, ...).
         try:
-            addon = get_addon_detail(slug)
+            addon = get_addon_detail_from_page(url)
         except AmoRateLimitedError:
             self._url_status.setText(
                 "AMO lookup unavailable (rate-limited) - enter GUID manually below."
             )
             return
-        except Exception:  # noqa: BLE001 - any network/lookup failure degrades to manual entry
-            self._url_status.setText(
-                "Couldn't look up that link - enter GUID manually below."
-            )
-            return
+        except Exception:  # noqa: BLE001 - fall back to the id/slug API before giving up
+            try:
+                addon = get_addon_detail(slug)
+            except AmoRateLimitedError:
+                self._url_status.setText(
+                    "AMO lookup unavailable (rate-limited) - enter GUID manually below."
+                )
+                return
+            except Exception as exc:  # noqa: BLE001 - any lookup failure degrades to manual
+                self._url_status.setText(
+                    f"Couldn't look up that link ({exc}) - enter GUID manually below."
+                )
+                return
 
         self.add_manual(addon.guid, InstallationMode.FORCE_INSTALLED, addon.install_url)
         self._url_status.setText(f"Added {addon.name} ({addon.guid}).")

@@ -1,11 +1,15 @@
+import json
+
 import pytest
 import responses
 
 from ffpolicy.fetchers.amo_client import (
     DETAIL_URL,
     SEARCH_URL,
+    AmoPageParseError,
     AmoRateLimitedError,
     get_addon_detail,
+    get_addon_detail_from_page,
     parse_addon_slug_from_url,
     rank_by_name_relevance,
     search_extensions,
@@ -20,6 +24,43 @@ ADDON_JSON = {
 }
 
 SEARCH_JSON = {"count": 1, "results": [ADDON_JSON]}
+
+ADDON_PAGE_URL = "https://addons.mozilla.org/en-US/firefox/addon/bitwarden-password-manager/"
+
+
+def _redux_state_html(*, addon_id=735894, slug="bitwarden-password-manager") -> str:
+    """A minimal stand-in for the real `redux-store-state` script tag AMO's
+    addon page embeds - shape verified against an actual saved AMO page:
+    addons.byID (string-keyed) / addons.bySlug (int-valued) + versions.byId,
+    exactly what the JSON API itself returns.
+    """
+    state = {
+        "addons": {
+            "byID": {
+                str(addon_id): {
+                    "guid": "{446900e4-71c2-419f-a6a7-df9c091e268b}",
+                    "name": "Bitwarden Password Manager",
+                    "icon_url": "https://example.com/bitwarden-icon.png",
+                    "slug": slug,
+                    "currentVersionId": 6331750,
+                }
+            },
+            "bySlug": {slug: addon_id},
+        },
+        "versions": {
+            "byId": {
+                "6331750": {
+                    "file": {"url": "https://example.com/bitwarden.xpi"},
+                    "version": "2026.6.1",
+                }
+            }
+        },
+    }
+    return (
+        "<html><body>"
+        f'<script type="application/json" id="redux-store-state">{json.dumps(state)}</script>'
+        "</body></html>"
+    )
 
 
 @pytest.fixture(autouse=True)
@@ -43,6 +84,13 @@ def test_search_extensions_parses_and_extracts_install_url():
     addon = result.results[0]
     assert addon.guid == "uBlock0@raymondhill.net"
     assert addon.install_url == "https://example.com/ublock.xpi"
+    # `lang` narrows which locale AMO includes (smaller payload, right
+    # fallback) - it doesn't change the {locale: value} shape, but it's
+    # still worth sending, so assert we actually do.
+    assert responses.calls[0].request.params.get("lang") == "en-US"
+    # A default "python-requests/X.Y" User-Agent is a common bot-blocking
+    # signature - assert we send an identifiable one instead.
+    assert "python-requests" not in responses.calls[0].request.headers["User-Agent"]
 
 
 @responses.activate
@@ -52,9 +100,79 @@ def test_get_addon_detail():
     )
 
     addon = get_addon_detail("ublock-origin")
+    assert responses.calls[0].request.params.get("lang") == "en-US"
 
     assert addon.name == "uBlock Origin"
     assert addon.install_url == "https://example.com/ublock.xpi"
+
+
+@responses.activate
+def test_get_addon_detail_from_page_extracts_redux_state():
+    responses.add(responses.GET, ADDON_PAGE_URL, body=_redux_state_html(), status=200)
+
+    addon = get_addon_detail_from_page(ADDON_PAGE_URL)
+
+    assert addon.guid == "{446900e4-71c2-419f-a6a7-df9c091e268b}"
+    assert addon.name == "Bitwarden Password Manager"
+    assert addon.install_url == "https://example.com/bitwarden.xpi"
+
+
+@responses.activate
+def test_get_addon_detail_from_page_uses_cache_on_second_call():
+    responses.add(responses.GET, ADDON_PAGE_URL, body=_redux_state_html(), status=200)
+
+    get_addon_detail_from_page(ADDON_PAGE_URL)
+    get_addon_detail_from_page(ADDON_PAGE_URL)
+
+    assert len(responses.calls) == 1
+
+
+@responses.activate
+def test_get_addon_detail_from_page_raises_on_missing_script_tag():
+    responses.add(responses.GET, ADDON_PAGE_URL, body="<html><body>nope</body></html>", status=200)
+
+    with pytest.raises(AmoPageParseError):
+        get_addon_detail_from_page(ADDON_PAGE_URL)
+
+
+@responses.activate
+def test_get_addon_detail_from_page_raises_on_missing_download_url():
+    html = _redux_state_html()
+    # Strip the version's file url out of the embedded state.
+    broken = html.replace('"file": {"url": "https://example.com/bitwarden.xpi"}', '"file": {}')
+    responses.add(responses.GET, ADDON_PAGE_URL, body=broken, status=200)
+
+    with pytest.raises(AmoPageParseError):
+        get_addon_detail_from_page(ADDON_PAGE_URL)
+
+
+@responses.activate
+def test_get_addon_detail_from_page_raises_on_rate_limit():
+    responses.add(responses.GET, ADDON_PAGE_URL, json={"detail": "rate limited"}, status=429)
+
+    with pytest.raises(AmoRateLimitedError):
+        get_addon_detail_from_page(ADDON_PAGE_URL)
+
+
+def test_addon_model_flattens_translated_name_object():
+    """AMO's API always returns translatable fields as a {locale: value}
+    object, even with `?lang=` narrowing which locales are present
+    (mozilla/addons-server docs: "The response is always an object.") -
+    AmoAddon.name must normalize that rather than assume a plain string.
+    """
+    translated = dict(ADDON_JSON, name={"en-US": "uBlock Origin"})
+    assert AmoAddon.model_validate(translated).name == "uBlock Origin"
+
+
+def test_addon_model_prefers_default_locale_when_requested_locale_missing():
+    # Matches AMO's documented ?lang= fallback shape:
+    # {"en-US": "Games", "de": null, "_default": "en-US"}
+    translated = dict(ADDON_JSON, name={"en-US": "uBlock Origin", "de": None, "_default": "en-US"})
+    assert AmoAddon.model_validate(translated).name == "uBlock Origin"
+
+
+def test_addon_model_name_passes_through_plain_string():
+    assert AmoAddon.model_validate(ADDON_JSON).name == "uBlock Origin"
 
 
 @responses.activate
