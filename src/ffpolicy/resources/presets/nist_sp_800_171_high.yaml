@@ -111,159 +111,146 @@ values:
   ExtensionUpdate: true
 
 rules:
-  - id: NIST-800-171-AC-2.1
+  - id: NIST-800-171-03.01.02
     version: "Rev. 3"
     severity: high
     policy: InstallAddonsPermission
-    title: "AC-2(1): Account Management - Supervised User Actions"
+    title: "03.01.02: Access Control - Authorization Enforcement"
     description: >-
-      The organization manages information system accounts and privileges with
-      oversight of user actions. Browser extensions can bypass security controls
-      and must be restricted to prevent unauthorized system modifications and access
-      to sensitive CUI.
+      Enforce approved authorizations for logical and physical access to
+      information, systems, and resources. In high-impact CUI environments,
+      browser extensions represent the primary attack surface and must be
+      completely restricted to prevent unauthorized system modifications and
+      access to sensitive information.
     recommendation: >-
-      Block all add-on installation unless explicitly pre-approved by administrators.
-      Use InstallAddonsPermission to prevent user installation. Maintain a curated
-      whitelist of approved extensions that have been vetted for security.
+      Block all add-on installation by default. Use InstallAddonsPermission to
+      strictly prevent user installation. Maintain a curated whitelist of only
+      critical extensions vetted by the organization's security team.
 
-  - id: NIST-800-171-AC-3
+  - id: NIST-800-171-03.01.03
     version: "Rev. 3"
     severity: high
     policy: BlockAboutConfig
-    title: "AC-3: Access Enforcement"
+    title: "03.01.03: Access Control - Privileged Access Restrictions"
     description: >-
-      Enforce approved authorizations for logical access to information and
-      system resources based on least privilege principles. Advanced Firefox
-      configuration access should be restricted to prevent unauthorized changes
-      that could weaken security controls or bypass organizational policies.
+      Restrict privileges to change software resident in organizational systems.
+      In high-impact CUI environments, advanced Firefox configuration (about:config)
+      access must be blocked to prevent any unauthorized modifications that could
+      weaken or bypass security controls.
     recommendation: >-
-      Block access to about:config to prevent unauthorized configuration changes.
-      Lock security-critical preferences to ensure users cannot bypass applied policies.
+      Block access to about:config and lock security-critical preferences. Prevent
+      users from bypassing applied policies or weakening security controls in any way.
 
-  - id: NIST-800-171-AC-6
+  - id: NIST-800-171-03.01.05
     version: "Rev. 3"
     severity: high
     policy: DisableDeveloperTools
-    title: "AC-6: Least Privilege"
+    title: "03.01.05: Access Control - Least Privilege"
     description: >-
-      The organization employs least privilege by restricting access to
-      privileged functions and information. Firefox developer tools expose system
-      internals, enable script injection attacks, and allow manipulation of
-      security policies; these must be disabled in high-sensitivity CUI environments.
+      Employ the principle of least privilege for all system access. Firefox
+      developer tools expose system internals, enable script injection, and allow
+      manipulation of security policies; in high-impact CUI environments, these
+      must be completely disabled.
     recommendation: >-
-      Disable developer tools to prevent advanced users from bypassing browser
-      security mechanisms or accessing sensitive debugging information about system configuration.
+      Disable developer tools to prevent any possibility of bypassing browser
+      security mechanisms or accessing sensitive debugging information about
+      system configuration and security policies.
 
-  - id: NIST-800-171-IA-2.1
+  - id: NIST-800-171-03.05.03
     version: "Rev. 3"
     severity: high
     policy: DisableFirefoxAccounts
-    title: "IA-2(1): Authentication - Multi-Factor Authentication"
+    title: "03.05.03: Identification & Authentication - Multi-Factor Authentication"
     description: >-
-      Use multi-factor authentication for remote access and privileged local
-      access to systems handling high-sensitivity CUI. Firefox Accounts are
-      cloud-synced and lack the MFA and audit controls required; use
-      organization-managed authentication instead.
+      Use multi-factor authentication for all access to high-impact CUI. Firefox
+      Accounts lack MFA and audit controls required for high-sensitivity systems;
+      organization-managed authentication is mandatory.
     recommendation: >-
-      Disable Firefox Accounts. Enforce use of organization-managed authentication
-      systems that support multi-factor authentication (TOTP, hardware keys, biometric).
+      Disable Firefox Accounts entirely. Require organization-managed authentication
+      with mandatory multi-factor authentication (TOTP, hardware keys, biometric).
 
-  - id: NIST-800-171-IA-5.1
+  - id: NIST-800-171-03.05.07
     version: "Rev. 3"
     severity: high
     policy: PasswordManagerEnabled
-    title: "IA-5(1): Authentication Mechanism Management - Password-based Authentication"
+    title: "03.05.07: Identification & Authentication - Authenticator Management"
     description: >-
-      Enforce minimum password complexity requirements, strength, and change
-      frequency for authentication mechanisms. Firefox password manager stores
-      passwords locally without organizational oversight or policy enforcement;
-      centralized credential management with full audit trail is required.
+      Secure authenticators and cryptographic keys against unauthorized access.
+      Firefox password manager offers no organizational audit or revocation
+      capabilities; centralized credential management is mandatory for high-impact
+      CUI systems.
     recommendation: >-
-      Disable Firefox password manager. Use organization's centralized credential
-      vault with enforcement of complexity/rotation policies, MFA, and audit logging.
+      Disable Firefox password manager entirely. Use organization's centralized
+      credential vault with enforced complexity, rotation policies, MFA, and
+      comprehensive audit logging for compliance.
 
-  - id: NIST-800-171-SC-7.5
-    version: "Rev. 3"
-    severity: high
-    policy: Proxy
-    title: "SC-7(5): Boundary Protection - Managed Interfaces"
-    description: >-
-      Deploy managed interfaces (default deny, permit by exception) between
-      information systems and external networks. For high-sensitivity CUI,
-      proxy configuration enforces strict boundary protection.
-    recommendation: >-
-      Configure and lock Proxy policy to route all HTTP(S) traffic through
-      organizational proxy/firewall for strict monitoring, filtering, and
-      enforcement of security policies. Audit all traffic.
-
-  - id: NIST-800-171-SC-8.1
+  - id: NIST-800-171-03.13.08
     version: "Rev. 3"
     severity: high
     policy: SSLVersionMin
-    title: "SC-8(1): Transmission Confidentiality and Integrity - Cryptographic Mechanisms"
+    title: "03.13.08: System & Communications Protection - Cryptographic Controls"
     description: >-
-      Implement cryptographic mechanisms to protect the confidentiality and
-      integrity of transmitted information. TLS 1.3 provides authenticated encryption
-      and must be enforced as minimum version to protect high-sensitivity CUI
-      from eavesdropping and modification attacks.
+      Implement NIST-approved cryptographic mechanisms to protect confidentiality
+      and integrity of high-impact CUI. TLS 1.3 is mandatory; all older versions
+      with protocol weaknesses must be disabled.
     recommendation: >-
-      Enforce and lock TLS 1.3 minimum version. Disable weak cipher suites
-      (3DES, RC4, DHE). Ensure all communications use strong authenticated encryption.
+      Enforce and lock TLS 1.3 minimum version. Disable all weak cipher suites
+      (3DES, RC4, DHE, static RSA). Ensure only NIST-approved authenticated
+      encryption protects all communications.
 
-  - id: NIST-800-171-SC-8.2
+  - id: NIST-800-171-03.13.11
     version: "Rev. 3"
     severity: high
     policy: DNSOverHTTPS
-    title: "SC-8(2): Transmission Confidentiality and Integrity - Pre/Post-transmission Handling"
+    title: "03.13.11: System & Communications Protection - Cryptographic Confidentiality"
     description: >-
-      Protect information before transmission and after receipt to prevent
-      unauthorized access. Standard DNS queries leak browsing patterns; DNS-over-HTTPS
-      encrypts queries to prevent eavesdropping by ISPs, network operators,
-      and government surveillance on CUI browsing.
+      Employ NIST-approved cryptography to protect all CUI flows, including DNS.
+      Standard DNS queries expose browsing patterns to eavesdroppers; DNS-over-HTTPS
+      is mandatory for high-impact CUI systems.
     recommendation: >-
-      Enable and lock DNS-over-HTTPS to encrypt DNS queries. Use trusted DoH
-      provider with privacy commitments (Cloudflare, Quad9, NextDNS, etc.).
+      Enable and lock DNS-over-HTTPS. Encrypt all DNS queries to prevent
+      eavesdropping on high-sensitivity CUI browsing activity. Use organization's
+      internal DoH provider or NIST-compliant third-party (Quad9).
 
-  - id: NIST-800-171-SI-2
+  - id: NIST-800-171-03.14.01
     version: "Rev. 3"
     severity: high
     policy: DisableAppUpdate
-    title: "SI-2: Flaw Remediation"
+    title: "03.14.01: System & Information Integrity - Flaw Remediation"
     description: >-
-      Identify, report, and correct information system flaws in a timely manner
-      using established procedures. Automatic updates are critical for CUI systems;
-      they ensure security patches are applied promptly before exploitation.
+      Identify, report, and correct information system flaws promptly. For
+      high-impact CUI, automatic updates are critical; security patches must be
+      deployed immediately before exploitation becomes possible.
     recommendation: >-
-      Enable automatic Firefox and extension updates with no user deferral.
-      Force restarts to apply critical security updates. Maintain detailed
-      audit logs of all updates for compliance verification.
+      Enable automatic Firefox and extension updates with no deferral. Force
+      restarts for critical patches. Maintain detailed audit logs of all updates
+      for compliance verification and incident response.
 
-  - id: NIST-800-171-SI-4.1
+  - id: NIST-800-171-03.14.04
     version: "Rev. 3"
     severity: high
     policy: EnableTrackingProtection
-    title: "SI-4(1): Information System Monitoring - System-generated Alerts"
+    title: "03.14.04: System & Information Integrity - Information Monitoring"
     description: >-
-      Monitor information systems for anomalous activity indicative of compromise.
-      Tracking scripts and fingerprinting enable unauthorized profiling and information
-      collection about system users; these must be blocked in CUI environments
-      to prevent information exfiltration.
+      Monitor and control information flows in and out of systems processing
+      high-impact CUI. Tracking scripts and fingerprinting enable unauthorized
+      profiling; these must be blocked to prevent information exfiltration.
     recommendation: >-
       Enable and lock strong tracking protection (Cryptomining, Fingerprinting).
-      Prevents invisible tracking scripts from profiling CUI system users and
-      leaking information about their activities and system configuration.
+      Prevent all invisible tracking scripts from profiling CUI system users and
+      leaking information about activities and system configuration.
 
-  - id: NIST-800-171-SI-12
+  - id: NIST-800-171-03.14.07
     version: "Rev. 3"
     severity: high
     policy: SanitizeOnShutdown
-    title: "SI-12: Information Handling and Retention"
+    title: "03.14.07: System & Information Integrity - Information Retention"
     description: >-
-      Handle and retain information consistent with organizational requirements
-      and legal obligations for CUI protection. Clear sensitive browsing data
-      on shutdown prevents CUI residue (cache, cookies, history) from being
-      accessed by other users or recovered via forensic analysis.
+      Handle and retain CUI consistent with organizational requirements. Clear
+      sensitive browsing data on shutdown to prevent high-impact CUI residue
+      (cache, cookies, history) from being accessed by other users or recovered
+      via forensic analysis.
     recommendation: >-
-      Enable and lock SanitizeOnShutdown for cache, cookies, history, sessions,
-      form data, and site settings. Automatically purge sensitive data when Firefox
-      closes to prevent unauthorized access or forensic recovery.
+      Enable and lock SanitizeOnShutdown for all data types (cache, cookies,
+      history, sessions, form data, site settings). Automatically purge all
+      sensitive data on Firefox close. Prevent users from disabling.
