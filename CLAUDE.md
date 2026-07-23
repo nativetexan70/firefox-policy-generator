@@ -80,6 +80,16 @@ same `PolicyDocument` produces byte-identical `policies.json` - this is asserted
 golden-file test (`tests/functional/test_golden.py` vs `tests/fixtures/golden/`).
 Regenerate the golden file only for an intentional format change, via `make update-golden`.
 
+**Policy description panel** (`gui/policy_description.PolicyDescriptionPanel`): shown above
+every policy's editor (both the generic form and the ExtensionSettings manager), rendering
+`PolicyDefinition.description` (what the setting does) and, where applicable,
+`security_privacy_impact` (a curated note on the security/privacy tradeoff of changing it -
+e.g. `ExtensionSettings` controls the browser's biggest attack surface, `DisableTelemetry`
+only affects data sent to Mozilla, `SSLVersionMin` prevents protocol downgrade). Both fields
+live in `resources/schema_backup.json`; `security_privacy_impact` is `None` for purely
+cosmetic policies (`Homepage`, `FirefoxHome`, `DisplayBookmarksToolbar`, ...), in which case
+that section of the panel simply doesn't render.
+
 **Form building** (`gui/widgets/field_widgets.build_field_editor`): recursively maps a
 `PolicyField` tree to editor widgets by `ValueType` (bool/string/int/enum/url -> plain
 widgets, object -> recurses into a group box, array -> add/remove rows). A wildcard-keyed

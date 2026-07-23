@@ -90,6 +90,24 @@ def test_generative_ai_policy_is_bundled():
     assert all(child.type is ValueType.BOOL for child in children_by_key.values())
 
 
+def test_high_impact_policies_have_security_privacy_impact_text():
+    data = json.loads(_read_resource("schema_backup.json"))
+    schema = PolicySchema.model_validate(data)
+
+    for name in ("ExtensionSettings", "DisableTelemetry", "SSLVersionMin", "Proxy"):
+        impact = schema.policies[name].security_privacy_impact
+        assert impact, f"{name} should document its security/privacy impact"
+        assert len(impact) > 20
+
+
+def test_purely_cosmetic_policies_have_no_security_privacy_impact_text():
+    data = json.loads(_read_resource("schema_backup.json"))
+    schema = PolicySchema.model_validate(data)
+
+    for name in ("DisplayBookmarksToolbar", "Homepage", "FirefoxHome"):
+        assert schema.policies[name].security_privacy_impact is None
+
+
 def test_bundled_categories_yaml_is_valid_and_covers_known_policies():
     categories = yaml.safe_load(_read_resource("categories.yaml"))
     data = json.loads(_read_resource("schema_backup.json"))

@@ -34,6 +34,7 @@ from ffpolicy.gui.extension_manager import ExtensionManager
 from ffpolicy.gui.form_builder import PolicyForm
 from ffpolicy.gui.import_source_dialog import ImportSourceDialog
 from ffpolicy.gui.json_preview import JsonPreview
+from ffpolicy.gui.policy_description import PolicyDescriptionPanel
 from ffpolicy.gui.preset_details import PresetDetailsDialog
 from ffpolicy.gui.style import APP_STYLESHEET
 from ffpolicy.gui.validation_panel import ValidationPanel
@@ -263,6 +264,7 @@ class MainWindow(QMainWindow):
 
         self._current_policy_name = name
         self._clear_editor()
+        self._editor_layout.addWidget(PolicyDescriptionPanel(definition))
 
         if name == "ExtensionSettings":
             manager = ExtensionManager(self.document.values.get(name))

@@ -138,7 +138,8 @@
             ]
           }
         ]
-      }
+      },
+      "security_privacy_impact": "Content sent to the AI chatbot, translations, or link-preview features may leave the device for processing (locally or in the cloud, depending on the feature/provider) - review what each feature sends before enabling it for users who handle sensitive data."
     },
     "BlockAboutConfig": {
       "name": "BlockAboutConfig",
@@ -149,7 +150,8 @@
         "key": "BlockAboutConfig",
         "type": "boolean",
         "default": false
-      }
+      },
+      "security_privacy_impact": "Reduces the risk of users (or malware/social-engineering \"paste this into your browser\" scams) weakening security-relevant preferences by hand; also blocks legitimate troubleshooting via about:config."
     },
     "DNSOverHTTPS": {
       "name": "DNSOverHTTPS",
@@ -187,7 +189,8 @@
             "type": "boolean"
           }
         ]
-      }
+      },
+      "security_privacy_impact": "Encrypting DNS prevents on-path eavesdroppers (e.g. a hostile local network) from seeing which domains a user resolves, but can also bypass enterprise DNS-based filtering/blocklists unless configured to use an approved resolver."
     },
     "DisableAppUpdate": {
       "name": "DisableAppUpdate",
@@ -198,7 +201,8 @@
         "key": "DisableAppUpdate",
         "type": "boolean",
         "default": false
-      }
+      },
+      "security_privacy_impact": "Disabling updates leaves known, publicly disclosed vulnerabilities unpatched - only do this if updates are managed through another controlled channel."
     },
     "DisableDeveloperTools": {
       "name": "DisableDeveloperTools",
@@ -209,7 +213,8 @@
         "key": "DisableDeveloperTools",
         "type": "boolean",
         "default": false
-      }
+      },
+      "security_privacy_impact": "Closes off a common vector for \"paste this code into the console\" social-engineering attacks and casual inspection of page scripts, at the cost of blocking legitimate debugging."
     },
     "DisableFeedbackCommands": {
       "name": "DisableFeedbackCommands",
@@ -231,7 +236,8 @@
         "key": "DisableFirefoxAccounts",
         "type": "boolean",
         "default": false
-      }
+      },
+      "security_privacy_impact": "Prevents bookmarks, history, saved passwords, and open tabs from being synced to Mozilla's servers and other signed-in devices."
     },
     "DisableFirefoxStudies": {
       "name": "DisableFirefoxStudies",
@@ -242,7 +248,8 @@
         "key": "DisableFirefoxStudies",
         "type": "boolean",
         "default": false
-      }
+      },
+      "security_privacy_impact": "Opts out of Normandy/Shield, Mozilla's remote-experimentation system that can push configuration or behavior changes to the browser without a separate update."
     },
     "DisableForgetButton": {
       "name": "DisableForgetButton",
@@ -253,7 +260,8 @@
         "key": "DisableForgetButton",
         "type": "boolean",
         "default": false
-      }
+      },
+      "security_privacy_impact": "Removing this button takes away a quick, one-click way for users to clear recent history/cookies themselves - a privacy convenience feature, not a risk in itself."
     },
     "DisableFormHistory": {
       "name": "DisableFormHistory",
@@ -264,7 +272,8 @@
         "key": "DisableFormHistory",
         "type": "boolean",
         "default": false
-      }
+      },
+      "security_privacy_impact": "Form and search-bar entries can include sensitive typed data (names, addresses, partial credentials); disabling history prevents it from being retained locally."
     },
     "DisablePocket": {
       "name": "DisablePocket",
@@ -275,7 +284,8 @@
         "key": "DisablePocket",
         "type": "boolean",
         "default": false
-      }
+      },
+      "security_privacy_impact": "Prevents URLs a user saves for later from being sent to Pocket, a separate Mozilla-operated third-party service."
     },
     "DisablePrivateBrowsing": {
       "name": "DisablePrivateBrowsing",
@@ -286,7 +296,8 @@
         "key": "DisablePrivateBrowsing",
         "type": "boolean",
         "default": false
-      }
+      },
+      "security_privacy_impact": "Removing private browsing takes away a privacy option (no local history/cookie retention for that window) rather than closing a security gap."
     },
     "DisableTelemetry": {
       "name": "DisableTelemetry",
@@ -297,7 +308,8 @@
         "key": "DisableTelemetry",
         "type": "boolean",
         "default": false
-      }
+      },
+      "security_privacy_impact": "Stops usage and diagnostic data from being sent to Mozilla; has no effect on data sent to websites themselves."
     },
     "DisabledCiphers": {
       "name": "DisabledCiphers",
@@ -319,7 +331,8 @@
             ]
           }
         ]
-      }
+      },
+      "security_privacy_impact": "Disabling weak/legacy TLS cipher suites hardens the browser against downgrade and cryptographic attacks; over-restricting can break TLS to servers that only offer older ciphers."
     },
     "DisplayBookmarksToolbar": {
       "name": "DisplayBookmarksToolbar",
@@ -380,7 +393,8 @@
             ]
           }
         ]
-      }
+      },
+      "security_privacy_impact": "Blocks known third-party trackers and cross-site tracking scripts, directly reducing ad-tech/analytics tracking of users across sites."
     },
     "EncryptedMediaExtensions": {
       "name": "EncryptedMediaExtensions",
@@ -402,7 +416,8 @@
             "default": false
           }
         ]
-      }
+      },
+      "security_privacy_impact": "Allowing EME (e.g. Widevine) lets closed-source, third-party-signed DRM code run with elevated media-pipeline access - a supply-chain/attack-surface tradeoff for DRM-protected content support."
     },
     "ExtensionSettings": {
       "name": "ExtensionSettings",
@@ -435,7 +450,8 @@
             ]
           }
         ]
-      }
+      },
+      "security_privacy_impact": "One of the highest-impact security controls available: extensions can read/modify every page a user visits and access browsing data, so which origins/IDs are allowed, blocked, or force-installed directly determines the browser's attack surface."
     },
     "ExtensionUpdate": {
       "name": "ExtensionUpdate",
@@ -446,7 +462,8 @@
         "key": "ExtensionUpdate",
         "type": "boolean",
         "default": false
-      }
+      },
+      "security_privacy_impact": "Disabling automatic extension updates leaves installed extensions unpatched against vulnerabilities discovered after installation."
     },
     "FirefoxHome": {
       "name": "FirefoxHome",
@@ -526,7 +543,8 @@
             "type": "boolean"
           }
         ]
-      }
+      },
+      "security_privacy_impact": "Content processed by these AI features (chatbot, link previews, tab grouping) may be sent off-device for processing - review what each feature sends before enabling it for users who handle sensitive data."
     },
     "Homepage": {
       "name": "Homepage",
@@ -569,7 +587,8 @@
         "key": "IPProtectionAvailable",
         "type": "boolean",
         "default": true
-      }
+      },
+      "security_privacy_impact": "Controls a user-facing privacy feature (masking the browser's IP from sites via a built-in VPN); disabling it removes a privacy option and, on networks that require unencrypted-through-VPN traffic for monitoring/compliance, avoids that traffic being tunneled around network controls."
     },
     "InstallAddonsPermission": {
       "name": "InstallAddonsPermission",
@@ -596,7 +615,8 @@
             "default": true
           }
         ]
-      }
+      },
+      "security_privacy_impact": "Controls which origins may prompt users to install an extension; overly permissive settings increase the risk of drive-by or social-engineered malicious extension installs."
     },
     "NetworkPrediction": {
       "name": "NetworkPrediction",
@@ -607,7 +627,8 @@
         "key": "NetworkPrediction",
         "type": "boolean",
         "default": true
-      }
+      },
+      "security_privacy_impact": "Prefetching/preconnecting can reveal a user's likely next destination to network observers and third-party origins before the user actually navigates there."
     },
     "PasswordManagerEnabled": {
       "name": "PasswordManagerEnabled",
@@ -618,7 +639,8 @@
         "key": "PasswordManagerEnabled",
         "type": "boolean",
         "default": true
-      }
+      },
+      "security_privacy_impact": "Disabling the built-in password manager may push users toward less secure habits (password reuse, browser-external plaintext notes) unless a managed alternative is provided in its place."
     },
     "Permissions": {
       "name": "Permissions",
@@ -668,7 +690,8 @@
             ]
           }
         ]
-      }
+      },
+      "security_privacy_impact": "Directly governs default access to sensitive capabilities - camera, microphone, notifications, autoplay - so overly permissive defaults increase the risk of unwanted mic/camera access or notification-based phishing."
     },
     "PopupBlocking": {
       "name": "PopupBlocking",
@@ -700,7 +723,8 @@
             "default": false
           }
         ]
-      }
+      },
+      "security_privacy_impact": "Pop-ups are a common vector for malvertising, fake-download prompts, and scareware; blocking them by default reduces that attack surface."
     },
     "Preferences": {
       "name": "Preferences",
@@ -731,7 +755,8 @@
             ]
           }
         ]
-      }
+      },
+      "security_privacy_impact": "Sets arbitrary preference values directly, which can include preferences that themselves control security behavior - review each preference set through this policy for unintended side effects."
     },
     "Proxy": {
       "name": "Proxy",
@@ -763,7 +788,8 @@
             "default": false
           }
         ]
-      }
+      },
+      "security_privacy_impact": "Misconfiguration can either leak traffic around required corporate monitoring/filtering, or - if pointed at an untrusted proxy - route all browsing traffic through a third party able to observe or tamper with it."
     },
     "SSLVersionMin": {
       "name": "SSLVersionMin",
@@ -779,7 +805,8 @@
           "tls1.2",
           "tls1.3"
         ]
-      }
+      },
+      "security_privacy_impact": "Enforces a floor on the TLS/SSL version the browser will negotiate, directly preventing downgrade to older protocol versions with known cryptographic weaknesses."
     },
     "SanitizeOnShutdown": {
       "name": "SanitizeOnShutdown",
@@ -827,7 +854,8 @@
             "type": "boolean"
           }
         ]
-      }
+      },
+      "security_privacy_impact": "Automatically clearing history/cookies/cache on exit reduces the local forensic footprint of a browsing session, particularly useful on shared or kiosk machines."
     },
     "SearchSuggestEnabled": {
       "name": "SearchSuggestEnabled",
@@ -838,7 +866,8 @@
         "key": "SearchSuggestEnabled",
         "type": "boolean",
         "default": true
-      }
+      },
+      "security_privacy_impact": "While enabled, each keystroke typed in the address/search bar can be sent to the default search engine as a suggestion query, leaking partial search intent to that third party as it is typed."
     },
     "UserMessaging": {
       "name": "UserMessaging",
