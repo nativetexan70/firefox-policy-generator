@@ -17,12 +17,12 @@ def _format(color: str, *, bold: bool = False) -> QTextCharFormat:
 
 class JsonHighlighter(QSyntaxHighlighter):
     _RULES = [
-        (re.compile(r'"(?:[^"\\]|\\.)*"(?=\s*:)'), _format("#1e40af", bold=True)),  # keys (dark blue)
-        (re.compile(r'(?<=:)\s*"(?:[^"\\]|\\.)*"'), _format("#b91c1c")),  # string values (dark red)
-        (re.compile(r"\b(true|false)\b"), _format("#166534")),  # booleans (dark green)
-        (re.compile(r"\bnull\b"), _format("#6b21a8")),  # null (dark purple)
-        (re.compile(r"-?\b\d+(\.\d+)?\b"), _format("#7c2d12")),  # numbers (dark orange)
-        (re.compile(r"[{}\[\],:]"), _format("#374151")),  # punctuation (dark gray)
+        (re.compile(r'"(?:[^"\\]|\\.)*"(?=\s*:)'), _format("#1e40af", bold=True)),  # keys
+        (re.compile(r'(?<=:)\s*"(?:[^"\\]|\\.)*"'), _format("#b91c1c")),  # strings
+        (re.compile(r"\b(true|false)\b"), _format("#166534")),  # booleans
+        (re.compile(r"\bnull\b"), _format("#6b21a8")),  # null
+        (re.compile(r"-?\b\d+(\.\d+)?\b"), _format("#7c2d12")),  # numbers
+        (re.compile(r"[{}\[\],:]"), _format("#374151")),  # punctuation
     ]
 
     def highlightBlock(self, text: str) -> None:
