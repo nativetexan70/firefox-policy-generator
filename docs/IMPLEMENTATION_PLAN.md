@@ -361,8 +361,10 @@ expressed in `policies.json` and need manual/procedural follow-up.
 
 ### 4.5 Key workflows
 
-1. **Build a policy set:** pick category → toggle/fill fields → watch live
-   preview → validate → export.
+1. **Build a policy set:** pick category → read the policy's description and,
+   where applicable, its security/privacy impact note (`gui/policy_description.
+   PolicyDescriptionPanel`, always shown above the editor) → toggle/fill fields
+   → watch live preview → validate → export.
 2. **Add an extension:** Extensions category → search AMO (or use the manual
    entry row) → pick result or fill GUID/mode/URL → appears in preview.
 3. **Apply a compliance preset:** Presets menu → pick a profile → confirm →

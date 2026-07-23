@@ -9,6 +9,7 @@ from ffpolicy.core.presets import load_preset
 from ffpolicy.fetchers.schema_sync import load_bundled_schema
 from ffpolicy.gui.extension_manager import ExtensionManager
 from ffpolicy.gui.main_window import MainWindow
+from ffpolicy.gui.policy_description import PolicyDescriptionPanel
 from ffpolicy.gui.preset_details import PresetDetailsDialog
 from ffpolicy.models.extension import InstallationMode
 
@@ -27,12 +28,19 @@ def main_window(qtbot, schema):
 
 def test_selecting_category_populates_form(qtbot, main_window):
     main_window._on_policy_selected("DisableTelemetry")
-    assert main_window._editor_layout.count() == 1
+    # description panel + form
+    assert main_window._editor_layout.count() == 2
+
+
+def test_selecting_policy_shows_description_panel(qtbot, main_window):
+    main_window._on_policy_selected("DisableTelemetry")
+    panel = main_window._editor_layout.itemAt(0).widget()
+    assert isinstance(panel, PolicyDescriptionPanel)
 
 
 def test_toggling_field_updates_live_json_preview(qtbot, main_window):
     main_window._on_policy_selected("DisableTelemetry")
-    form = main_window._editor_layout.itemAt(0).widget()
+    form = main_window._editor_layout.itemAt(1).widget()
 
     form._editor.set_value(True)
     form._editor.valueChanged.emit(True)
@@ -46,13 +54,13 @@ def test_toggling_field_updates_live_json_preview(qtbot, main_window):
 
 def test_selecting_extension_settings_shows_extension_manager(qtbot, main_window):
     main_window._on_policy_selected("ExtensionSettings")
-    widget = main_window._editor_layout.itemAt(0).widget()
+    widget = main_window._editor_layout.itemAt(1).widget()
     assert isinstance(widget, ExtensionManager)
 
 
 def test_adding_extension_writes_extension_settings_entry(qtbot, main_window):
     main_window._on_policy_selected("ExtensionSettings")
-    manager = main_window._editor_layout.itemAt(0).widget()
+    manager = main_window._editor_layout.itemAt(1).widget()
 
     manager.add_manual(
         "uBlock0@raymondhill.net",
@@ -73,7 +81,7 @@ def test_manual_add_row_works_when_search_is_unavailable(qtbot, main_window):
     message shown when AMO search fails (rate-limited, blocked, offline).
     """
     main_window._on_policy_selected("ExtensionSettings")
-    manager = main_window._editor_layout.itemAt(0).widget()
+    manager = main_window._editor_layout.itemAt(1).widget()
 
     manager._manual_guid.setText("ext@example.com")
     manager._manual_mode.setCurrentText(InstallationMode.BLOCKED.value)
@@ -86,7 +94,7 @@ def test_manual_add_row_works_when_search_is_unavailable(qtbot, main_window):
 
 def test_manual_add_row_ignores_empty_guid(qtbot, main_window):
     main_window._on_policy_selected("ExtensionSettings")
-    manager = main_window._editor_layout.itemAt(0).widget()
+    manager = main_window._editor_layout.itemAt(1).widget()
 
     manager._manual_guid.setText("   ")
     manager._on_manual_add()
@@ -123,7 +131,7 @@ def test_apply_preset_refreshes_currently_open_form(qtbot, main_window):
         with patch.object(QMessageBox, "information", return_value=QMessageBox.StandardButton.Ok):
             main_window._on_apply_preset(preset)
 
-    form = main_window._editor_layout.itemAt(0).widget()
+    form = main_window._editor_layout.itemAt(1).widget()
     assert form._editor.get_value() is True
 
 

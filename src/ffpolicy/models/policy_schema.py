@@ -36,6 +36,7 @@ class PolicyDefinition(BaseModel):
     name: str
     category: str = "Uncategorized"
     description: str | None = None
+    security_privacy_impact: str | None = None
     min_firefox_version: int | None = None
     max_firefox_version: int | None = None
     root_field: PolicyField
