@@ -1,0 +1,195 @@
+id: nist_sp_800_171_high
+name: NIST SP 800-171 - CUI High Impact
+description: >-
+  Security controls for Firefox in environments handling Controlled Unclassified
+  Information (CUI) with high confidentiality/integrity impact. Enforces maximum
+  security controls aligned with NIST 800-171 families AC (Access Control),
+  IA (Identification & Authentication), SC (System & Communications Protection),
+  and SI (System & Information Integrity). Suitable for organizations processing
+  highly sensitive government contracts or near-classified information.
+source: https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-171r3.pdf
+values:
+  # AC - Access Control
+  ExtensionSettings:
+    '*':
+      installation_mode: blocked
+  InstallAddonsPermission:
+    Default: false
+    Locked: true
+  DisableDeveloperTools: true
+  BlockAboutConfig: true
+
+  # IA - Identification & Authentication
+  PasswordManagerEnabled: false
+  DisableFirefoxAccounts: true
+
+  # SC - System & Communications Protection
+  SSLVersionMin: tls1.3
+  DNSOverHTTPS:
+    Enabled: true
+    Locked: true
+  Proxy:
+    Locked: true
+  DisabledCiphers:
+    TLS_RSA_WITH_3DES_EDE_CBC_SHA: true
+    TLS_RSA_WITH_RC4_128_MD5: true
+    TLS_RSA_WITH_RC4_128_SHA: true
+    TLS_DHE_RSA_WITH_3DES_EDE_CBC_SHA: true
+  EncryptedMediaExtensions:
+    Enabled: true
+    Locked: true
+
+  # SI - System & Information Integrity
+  Preferences:
+    security.default_personal_cert:
+      Value: Ask Every Time
+      Status: locked
+    browser.search.update: false
+    dom.disable_window_move_resize: true
+    dom.disable_window_flip: true
+    browser.contentblocking.category:
+      Value: strict
+      Status: locked
+  EnableTrackingProtection:
+    Cryptomining: true
+    Fingerprinting: true
+    Locked: true
+  SanitizeOnShutdown:
+    Cache: true
+    Cookies: true
+    Downloads: true
+    FormData: true
+    History: true
+    Sessions: true
+    SiteSettings: true
+    OfflineApps: true
+    Locked: true
+  DisableFormHistory: true
+  NetworkPrediction: false
+  SearchSuggestEnabled: false
+
+  # Privacy Controls
+  DisableTelemetry: true
+  DisableFirefoxStudies: true
+  DisableFeedbackCommands: true
+  DisablePocket: true
+  DisableForgetButton: false
+  DisablePrivateBrowsing: true  # CUI-High: stricter
+  UserMessaging:
+    ExtensionRecommendations: false
+    FeatureRecommendations: false
+    UrlbarInterventions: false
+  FirefoxHome:
+    Search: false
+    TopSites: false
+    SponsoredTopSites: false
+    Pocket: false
+    SponsoredPocket: false
+    Highlights: false
+    Snippets: false
+    Locked: true
+
+  # Permissions - CUI-High: stricter defaults
+  Permissions:
+    Autoplay:
+      Default: block-audio-video
+    Geolocation:
+      Default: block
+    Microphone:
+      Default: block
+    Camera:
+      Default: block
+    Notifications:
+      Default: block
+    VirtualReality:
+      Default: block
+    Location:
+      Default: block
+
+  # Updates & Maintenance
+  DisableAppUpdate: false
+  ExtensionUpdate: true
+
+rules:
+  - id: NIST-AC-2
+    version: "AC-2"
+    severity: high
+    policy: InstallAddonsPermission
+    title: "Access Control - Account Management"
+    description: >-
+      Implement mechanisms to account for and control all accesses to the
+      information system. Firefox add-ons can bypass security controls.
+    recommendation: >-
+      Block all add-on installation. Use administrator whitelisting for
+      pre-approved extensions only.
+
+  - id: NIST-AC-3
+    version: "AC-3"
+    severity: high
+    policy: BlockAboutConfig
+    title: "Access Control - Enforcement"
+    description: >-
+      Enforce approved authorizations for logical access. Advanced Firefox
+      configuration should be restricted to prevent privilege escalation.
+    recommendation: >-
+      Block access to about:config to prevent unauthorized configuration changes.
+
+  - id: NIST-IA-2
+    version: "IA-2"
+    severity: high
+    policy: PasswordManagerEnabled
+    title: "Identification & Authentication"
+    description: >-
+      Employ organization-approved authentication mechanisms. Firefox's
+      password manager should not be used for CUI-High systems.
+    recommendation: >-
+      Disable Firefox password manager. Use organization's credential
+      management system with multi-factor authentication.
+
+  - id: NIST-SC-2
+    version: "SC-2"
+    severity: high
+    policy: SSLVersionMin
+    title: "System & Communications Protection - Boundary Protection"
+    description: >-
+      Enforce cryptographic protocols for data in transit. Enforce TLS 1.3
+      minimum for maximum cryptographic strength.
+    recommendation: >-
+      Enforce TLS 1.3 minimum to ensure strongest encryption for all network
+      communications.
+
+  - id: NIST-SC-8
+    version: "SC-8"
+    severity: high
+    policy: DNSOverHTTPS
+    title: "System & Communications Protection - Transmission Confidentiality"
+    description: >-
+      Protect the confidentiality and integrity of transmitted information.
+      DNS queries must be encrypted to prevent eavesdropping.
+    recommendation: >-
+      Enable and lock DNS-over-HTTPS to encrypt DNS queries and prevent ISP
+      eavesdropping on browsing activity.
+
+  - id: NIST-SI-2
+    version: "SI-2"
+    severity: high
+    policy: DisableAppUpdate
+    title: "System & Information Integrity - Flaw Remediation"
+    description: >-
+      Identify, report, and correct information system flaws in a timely manner.
+      Automatic updates ensure security vulnerability patches are applied.
+    recommendation: >-
+      Enable automatic Firefox and extension updates to ensure security patches
+      are applied promptly.
+
+  - id: NIST-SI-4
+    version: "SI-4"
+    severity: high
+    policy: EnableTrackingProtection
+    title: "System & Information Integrity - System Monitoring"
+    description: >-
+      Tracking and fingerprinting enable identification and information leakage
+      that could compromise system security.
+    recommendation: >-
+      Enable and lock strong tracking protection including cryptomining and
+      fingerprinting prevention.

@@ -1,0 +1,157 @@
+id: home_user_balanced
+name: Home User - Balanced Profile
+description: >-
+  Recommended default for most home users. Balances strong security and privacy
+  with usability. Enables password manager and allows user-selected extensions,
+  while enforcing strong tracking protection and HTTPS. Good for families and
+  typical home internet users.
+source: >-
+  Mozilla Firefox Security Hardening Guide, NIST SP 800-53, Mozilla's Privacy & Security
+  Recommendations
+values:
+  # Privacy & Telemetry
+  DisableTelemetry: true
+  DisableFirefoxStudies: true
+  DisableFeedbackCommands: true
+  DisablePocket: true
+
+  # Content Blocking & Tracking Protection
+  Preferences:
+    browser.contentblocking.category:
+      Value: strict
+      Status: locked
+  EnableTrackingProtection:
+    Cryptomining: true
+    Fingerprinting: true
+  SearchSuggestEnabled: false
+  NetworkPrediction: false
+
+  # Network Security
+  SSLVersionMin: tls1.2
+  DNSOverHTTPS:
+    Enabled: true
+  DisabledCiphers:
+    TLS_RSA_WITH_3DES_EDE_CBC_SHA: true
+
+  # Credentials - Balanced: password manager enabled
+  PasswordManagerEnabled: true
+  Preferences:
+    security.default_personal_cert:
+      Value: Ask Every Time
+      Status: locked
+
+  # Extensions - Balanced: user choice
+  ExtensionSettings: {}
+  InstallAddonsPermission:
+    Default: true
+
+  # Data Cleanup
+  SanitizeOnShutdown:
+    Cache: true
+    Cookies: true
+    History: true
+    Sessions: true
+    Locked: true
+
+  # Permissions
+  Permissions:
+    Autoplay:
+      Default: block-audio-video
+    Geolocation:
+      Default: block
+    Microphone:
+      Default: block
+    Camera:
+      Default: block
+    Notifications:
+      Default: block
+
+  # UI Cleanup
+  UserMessaging:
+    ExtensionRecommendations: false
+    FeatureRecommendations: false
+  FirefoxHome:
+    SponsoredTopSites: false
+    Pocket: false
+    SponsoredPocket: false
+    Snippets: false
+
+  # Updates
+  DisableAppUpdate: false
+  ExtensionUpdate: true
+
+  # Preserve useful features
+  DisableForgetButton: false
+  DisablePrivateBrowsing: false
+  PopupBlocking:
+    Default: true
+
+rules:
+  - id: HU-PRIVACY-1
+    version: "1.0"
+    severity: high
+    policy: DisableTelemetry
+    title: "Disable Mozilla Telemetry"
+    description: >-
+      Firefox sends telemetry data to Mozilla about your browsing habits,
+      hardware, and system configuration. Home users should opt-out.
+    recommendation: Disable telemetry and studies.
+
+  - id: HU-SECURITY-1
+    version: "1.0"
+    severity: high
+    policy: EnableTrackingProtection
+    title: "Enable Strong Tracking Protection"
+    description: >-
+      Tracking and fingerprinting enable identification and profiling.
+    recommendation: >-
+      Enable strict tracking protection with fingerprinting and cryptomining
+      prevention.
+
+  - id: HU-SECURITY-2
+    version: "1.0"
+    severity: high
+    policy: SSLVersionMin
+    title: "Enforce TLS 1.2 Minimum"
+    description: >-
+      Older SSL/TLS versions contain cryptographic weaknesses.
+    recommendation: Enforce TLS 1.2 or higher for all HTTPS connections.
+
+  - id: HU-SECURITY-3
+    version: "1.0"
+    severity: medium
+    policy: DNSOverHTTPS
+    title: "Enable DNS-over-HTTPS"
+    description: >-
+      Standard DNS queries are unencrypted, allowing eavesdropping.
+    recommendation: Enable DNS-over-HTTPS to hide browsing from ISPs.
+
+  - id: HU-SECURITY-4
+    version: "1.0"
+    severity: medium
+    policy: Permissions
+    title: "Restrict Sensitive Permissions"
+    description: >-
+      Websites request access to geolocation, camera, microphone.
+    recommendation: Block these permissions by default.
+
+  - id: HU-SECURITY-5
+    version: "1.0"
+    severity: high
+    policy: SanitizeOnShutdown
+    title: "Clear Browsing Data on Exit"
+    description: >-
+      Cached pages can be recovered by other users on shared computers.
+    recommendation: Automatically clear cache and history on exit.
+
+  - id: HU-USABILITY-1
+    version: "1.0"
+    severity: low
+    policy: PasswordManagerEnabled
+    title: "Password Manager for Usability"
+    description: >-
+      Firefox's built-in password manager increases usability by generating
+      and storing strong passwords, using system credential storage for
+      encryption.
+    recommendation: >-
+      Enable password manager for most users who can secure their computers.

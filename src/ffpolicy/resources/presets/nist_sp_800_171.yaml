@@ -1,0 +1,200 @@
+id: nist_sp_800_171_moderate
+name: NIST SP 800-171 - CUI Moderate Impact
+description: >-
+  Security controls for Firefox in environments handling Controlled Unclassified
+  Information (CUI) with moderate confidentiality/integrity/availability impact.
+  Enforces strict security controls aligned with NIST 800-171 families AC (Access Control),
+  IA (Identification & Authentication), SC (System & Communications Protection),
+  and SI (System & Information Integrity). Suitable for organizations processing
+  government or sensitive business data that requires encryption, access control,
+  and integrity assurance.
+source: https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-171r3.pdf
+values:
+  # AC - Access Control
+  ExtensionSettings:
+    '*':
+      installation_mode: blocked
+  InstallAddonsPermission:
+    Default: false
+    Locked: true
+  DisableDeveloperTools: true
+  BlockAboutConfig: true
+
+  # IA - Identification & Authentication
+  PasswordManagerEnabled: false
+  DisableFirefoxAccounts: true
+
+  # SC - System & Communications Protection
+  SSLVersionMin: tls1.3
+  DNSOverHTTPS:
+    Enabled: true
+    Locked: true
+  Proxy:
+    Locked: true
+  DisabledCiphers:
+    TLS_RSA_WITH_3DES_EDE_CBC_SHA: true
+    TLS_RSA_WITH_RC4_128_MD5: true
+    TLS_RSA_WITH_RC4_128_SHA: true
+    TLS_DHE_RSA_WITH_3DES_EDE_CBC_SHA: true
+  EncryptedMediaExtensions:
+    Enabled: true
+    Locked: true
+
+  # SI - System & Information Integrity
+  Preferences:
+    security.default_personal_cert:
+      Value: Ask Every Time
+      Status: locked
+    browser.search.update: false
+    dom.disable_window_move_resize: true
+    dom.disable_window_flip: true
+    browser.contentblocking.category:
+      Value: strict
+      Status: locked
+  EnableTrackingProtection:
+    Cryptomining: true
+    Fingerprinting: true
+    Locked: true
+  SanitizeOnShutdown:
+    Cache: true
+    Cookies: true
+    Downloads: true
+    FormData: true
+    History: true
+    Sessions: true
+    SiteSettings: true
+    OfflineApps: true
+    Locked: true
+  DisableFormHistory: true
+  NetworkPrediction: false
+  SearchSuggestEnabled: false
+
+  # Privacy Controls
+  DisableTelemetry: true
+  DisableFirefoxStudies: true
+  DisableFeedbackCommands: true
+  DisablePocket: true
+  DisableForgetButton: false  # Keep available for manual use
+  DisablePrivateBrowsing: true  # Prevent circumvention in CUI environments
+  UserMessaging:
+    ExtensionRecommendations: false
+    FeatureRecommendations: false
+    UrlbarInterventions: false
+  FirefoxHome:
+    Search: false
+    TopSites: false
+    SponsoredTopSites: false
+    Pocket: false
+    SponsoredPocket: false
+    Highlights: false
+    Snippets: false
+    Locked: true
+
+  # Permissions - Block risky permissions by default
+  Permissions:
+    Autoplay:
+      Default: block-audio-video
+    Geolocation:
+      Default: block
+    Microphone:
+      Default: block
+    Camera:
+      Default: block
+    Notifications:
+      Default: block
+    VirtualReality:
+      Default: block
+
+  # Updates & Maintenance
+  DisableAppUpdate: false  # Keep auto-updates enabled for security
+  ExtensionUpdate: true    # Keep extension updates enabled
+
+rules:
+  - id: NIST-AC-2
+    version: "AC-2"
+    severity: high
+    policy: InstallAddonsPermission
+    title: "Access Control - Account Management"
+    description: >-
+      Implement mechanisms to account for and control all accesses to the
+      information system. Firefox add-ons can bypass security controls and are
+      a major attack surface.
+    recommendation: >-
+      Block all add-on installation unless explicitly pre-approved by administrators.
+      Use InstallAddonsPermission to disable user installation.
+
+  - id: NIST-AC-3
+    version: "AC-3"
+    severity: high
+    policy: BlockAboutConfig
+    title: "Access Control - Enforcement"
+    description: >-
+      Enforce approved authorizations for logical access to the information
+      system based on least privilege principles. Advanced Firefox configuration
+      should be restricted to prevent privilege escalation.
+    recommendation: >-
+      Block access to about:config to prevent unauthorized configuration changes.
+
+  - id: NIST-IA-2
+    version: "IA-2"
+    severity: high
+    policy: PasswordManagerEnabled
+    title: "Identification & Authentication - Authentication"
+    description: >-
+      Employ multifactor authentication for remote network access to privileged
+      accounts. Firefox's built-in password manager may store weak credentials
+      in systems handling CUI.
+    recommendation: >-
+      Disable Firefox password manager. Use organization-approved credential
+      management systems with MFA.
+
+  - id: NIST-SC-2
+    version: "SC-2"
+    severity: high
+    policy: SSLVersionMin
+    title: "System & Communications Protection - Boundary Protection"
+    description: >-
+      Implement subnetworks for publicly accessible system components that are
+      physically or logically separated from internal networks. Enforce cryptographic
+      protocols for data in transit.
+    recommendation: >-
+      Enforce TLS 1.3 minimum to ensure strong encryption for all network
+      communications.
+
+  - id: NIST-SC-8
+    version: "SC-8"
+    severity: high
+    policy: DNSOverHTTPS
+    title: "System & Communications Protection - Transmission Confidentiality/Integrity"
+    description: >-
+      Protect the confidentiality and integrity of transmitted information,
+      including DNS queries which can leak browsing activity.
+    recommendation: >-
+      Enable DNS-over-HTTPS to encrypt DNS queries and prevent ISP/network
+      eavesdropping on browsing activity.
+
+  - id: NIST-SI-2
+    version: "SI-2"
+    severity: high
+    policy: DisableAppUpdate
+    title: "System & Information Integrity - Flaw Remediation"
+    description: >-
+      Identify, report, and correct information system flaws in a timely manner.
+      Automatic updates ensure timely patching of security vulnerabilities.
+    recommendation: >-
+      Enable automatic Firefox and extension updates to ensure security patches
+      are applied promptly.
+
+  - id: NIST-SI-4
+    version: "SI-4"
+    severity: high
+    policy: EnableTrackingProtection
+    title: "System & Information Integrity - Information System Monitoring"
+    description: >-
+      Monitor and analyze information flows for potential attacks and indicators
+      of compromise. Tracking and fingerprinting enable identification and
+      profiling of system users.
+    recommendation: >-
+      Enable strong tracking protection including cryptomining and fingerprinting
+      prevention to reduce information leakage.
+
