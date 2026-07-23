@@ -1,0 +1,273 @@
+id: nist_sp_800_171_moderate
+name: NIST SP 800-171 - CUI Moderate Impact
+description: >-
+  Security controls for Firefox in environments handling Controlled Unclassified
+  Information (CUI) with moderate confidentiality/integrity/availability impact.
+  Enforces strict security controls aligned with NIST 800-171 families AC (Access Control),
+  IA (Identification & Authentication), SC (System & Communications Protection),
+  and SI (System & Information Integrity). Suitable for organizations processing
+  government or sensitive business data that requires encryption, access control,
+  and integrity assurance.
+source: https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-171r3.pdf
+values:
+  # AC - Access Control
+  ExtensionSettings:
+    '*':
+      installation_mode: blocked
+  InstallAddonsPermission:
+    Default: false
+    Locked: true
+  DisableDeveloperTools: true
+  BlockAboutConfig: true
+
+  # IA - Identification & Authentication
+  PasswordManagerEnabled: false
+  DisableFirefoxAccounts: true
+
+  # SC - System & Communications Protection
+  SSLVersionMin: tls1.3
+  DNSOverHTTPS:
+    Enabled: true
+    Locked: true
+  Proxy:
+    Locked: true
+  DisabledCiphers:
+    TLS_RSA_WITH_3DES_EDE_CBC_SHA: true
+    TLS_RSA_WITH_RC4_128_MD5: true
+    TLS_RSA_WITH_RC4_128_SHA: true
+    TLS_DHE_RSA_WITH_3DES_EDE_CBC_SHA: true
+  EncryptedMediaExtensions:
+    Enabled: true
+    Locked: true
+
+  # SI - System & Information Integrity
+  Preferences:
+    security.default_personal_cert:
+      Value: Ask Every Time
+      Status: locked
+    browser.search.update: false
+    dom.disable_window_move_resize: true
+    dom.disable_window_flip: true
+    browser.contentblocking.category:
+      Value: strict
+      Status: locked
+    extensions.htmlaboutaddons.recommendations.enabled:
+      Value: false
+      Status: locked
+  EnableTrackingProtection:
+    Cryptomining: true
+    Fingerprinting: true
+    Locked: true
+  SanitizeOnShutdown:
+    Cache: true
+    Cookies: true
+    Downloads: true
+    FormData: true
+    History: true
+    Sessions: true
+    SiteSettings: true
+    OfflineApps: true
+    Locked: true
+  DisableFormHistory: true
+  NetworkPrediction: false
+  SearchSuggestEnabled: false
+
+  # Privacy Controls
+  DisableTelemetry: true
+  DisableFirefoxStudies: true
+  DisableFeedbackCommands: true
+  DisablePocket: true
+  DisableForgetButton: false  # Keep available for manual use
+  DisablePrivateBrowsing: true  # Prevent circumvention in CUI environments
+  UserMessaging:
+    ExtensionRecommendations: false
+    FeatureRecommendations: false
+    UrlbarInterventions: false
+  FirefoxHome:
+    Search: false
+    TopSites: false
+    SponsoredTopSites: false
+    Pocket: false
+    SponsoredPocket: false
+    Highlights: false
+    Snippets: false
+    Locked: true
+
+  # Pop-up Protection (from DISA STIG)
+  PopupBlocking:
+    Default: true
+    Locked: true
+
+  # Permissions - Block risky permissions by default
+  Permissions:
+    Autoplay:
+      Default: block-audio-video
+    Geolocation:
+      Default: block
+    Microphone:
+      Default: block
+    Camera:
+      Default: block
+    Notifications:
+      Default: block
+    VirtualReality:
+      Default: block
+
+  # Updates & Maintenance
+  DisableAppUpdate: false  # Keep auto-updates enabled for security
+  ExtensionUpdate: true    # Keep extension updates enabled
+
+rules:
+  - id: NIST-800-171-03.01.02
+    version: "Rev. 3"
+    severity: high
+    policy: InstallAddonsPermission
+    title: "03.01.02: Access Control - Authorization Enforcement"
+    description: >-
+      Enforce approved authorizations for logical and physical access to
+      information, systems, and resources in accordance with applicable access
+      control policies. Browser extensions represent a primary attack surface and
+      must be restricted to prevent unauthorized system modifications and access
+      to sensitive CUI.
+    recommendation: >-
+      Block all add-on installation by default unless explicitly pre-approved by
+      administrators. Use InstallAddonsPermission policy to prevent user installation.
+      Maintain a curated whitelist of extensions that have been vetted for security.
+
+  - id: NIST-800-171-03.01.02-alt
+    version: "Rev. 3"
+    severity: high
+    policy: BlockAboutConfig
+    title: "03.01.02: Access Control - Authorization Enforcement (Configuration)"
+    description: >-
+      Enforce approved authorizations for logical access to configuration and
+      system resources. Advanced Firefox configuration (about:config) access
+      enables unauthorized modifications that could weaken security controls or
+      bypass organizational policies enforced via policies.json.
+    recommendation: >-
+      Block access to about:config to enforce that only approved configurations
+      (deployed via policies.json) can be active. Lock security-critical preferences
+      to prevent users from bypassing applied policies or weakening security controls.
+
+  - id: NIST-800-171-03.01.05
+    version: "Rev. 3"
+    severity: high
+    policy: DisableDeveloperTools
+    title: "03.01.05: Access Control - Least Privilege"
+    description: >-
+      Employ the principle of least privilege, including for special privileges
+      used for administrative and privileged access. Firefox developer tools
+      expose system internals, enable script injection attacks, and allow
+      manipulation of security policies; these must be disabled in CUI environments.
+    recommendation: >-
+      Disable developer tools to prevent advanced users from bypassing browser
+      security mechanisms or accessing sensitive debugging information about
+      system configuration and security policies.
+
+  - id: NIST-800-171-03.05.03
+    version: "Rev. 3"
+    severity: high
+    policy: DisableFirefoxAccounts
+    title: "03.05.03: Identification & Authentication - Multi-Factor Authentication"
+    description: >-
+      Use multi-factor authentication for local and remote access to CUI,
+      especially for privileged access. Firefox Accounts are cloud-synced and
+      lack the MFA and audit controls required for CUI systems; organization-managed
+      authentication is mandatory.
+    recommendation: >-
+      Disable Firefox Accounts. Require use of organization-managed authentication
+      systems that support multi-factor authentication (TOTP, hardware keys, biometric).
+
+  - id: NIST-800-171-03.05.07
+    version: "Rev. 3"
+    severity: high
+    policy: PasswordManagerEnabled
+    title: "03.05.07: Identification & Authentication - Password Management"
+    description: >-
+      Enforce minimum password composition, complexity, and security requirements.
+      Firefox's local password manager stores passwords without organizational oversight,
+      policy enforcement, or audit trail; it cannot enforce complexity rules, rotation
+      policies, or breach detection required by 03.05.07 and NIST standards.
+    recommendation: >-
+      Disable Firefox password manager. Use organization-approved centralized
+      credential vault (e.g., SSO provider, enterprise password manager) that
+      enforces password composition, complexity, rotation policies, breach detection,
+      and maintains audit logs for all access and changes.
+
+  - id: NIST-800-171-03.13.08
+    version: "Rev. 3"
+    severity: high
+    policy: SSLVersionMin
+    title: "03.13.08: System & Communications Protection - Cryptographic Controls"
+    description: >-
+      Implement cryptographic mechanisms to protect the confidentiality and
+      integrity of transmitted CUI. TLS 1.3 provides authenticated encryption and
+      AEAD ciphers required by NIST standards; older versions contain protocol
+      weaknesses and must be disabled.
+    recommendation: >-
+      Enforce and lock TLS 1.3 minimum version. Disable all weak cipher suites
+      (3DES, RC4, DHE, static RSA). Ensure all HTTPS communications use strong,
+      authenticated encryption resistant to downgrade attacks.
+
+  - id: NIST-800-171-03.13.11
+    version: "Rev. 3"
+    severity: high
+    policy: DNSOverHTTPS
+    title: "03.13.11: System & Communications Protection - Cryptographic Confidentiality"
+    description: >-
+      Employ NIST-approved cryptographic algorithms and techniques to protect
+      CUI in transit. Standard DNS queries leak browsing patterns to ISPs, network
+      operators, and eavesdroppers; DNS-over-HTTPS encrypts resolution queries.
+    recommendation: >-
+      Enable and lock DNS-over-HTTPS to encrypt all DNS queries and prevent
+      eavesdropping on CUI browsing activity. Use NIST-compliant DoH provider
+      (Cloudflare, Quad9, NextDNS, or organization's internal DoH).
+
+  - id: NIST-800-171-03.14.01
+    version: "Rev. 3"
+    severity: high
+    policy: DisableAppUpdate
+    title: "03.14.01: System & Information Integrity - Flaw Remediation"
+    description: >-
+      Identify, report, and correct information system flaws in a timely manner
+      using established procedures. Automatic updates are critical for systems
+      processing CUI; they ensure security patches are deployed promptly before
+      exploitation windows close.
+    recommendation: >-
+      Enable automatic Firefox and extension updates with no user deferral. Force
+      restarts to apply critical security patches. Maintain detailed patching logs
+      and audit trail for regulatory compliance verification.
+
+  - id: NIST-800-171-03.14.06
+    version: "Rev. 3"
+    severity: high
+    policy: EnableTrackingProtection
+    title: "03.14.06: System & Information Integrity - System Monitoring"
+    description: >-
+      Monitor the system to detect attacks, indicators of potential attacks, and
+      unauthorized activities. Third-party tracking scripts and fingerprinting are
+      attack vectors that enable unauthorized profiling, information collection about
+      CUI system users, and information exfiltration. Blocking these is a form of
+      attack detection and system monitoring.
+    recommendation: >-
+      Enable and lock strong tracking protection (Cryptomining, Fingerprinting).
+      Prevents invisible tracking scripts from profiling users and leaking
+      information about browsing behavior and system configuration to attackers.
+
+  - id: NIST-800-171-03.14.08
+    version: "Rev. 3"
+    severity: high
+    policy: SanitizeOnShutdown
+    title: "03.14.08: System & Information Integrity - Information Management and Retention"
+    description: >-
+      Manage and retain CUI within the system and output from the system in
+      accordance with applicable laws, regulations, and organizational policies.
+      Clear sensitive browsing data on shutdown prevents CUI residue (cache, cookies,
+      history, sessions) from being accessed by other system users or recovered via
+      forensic analysis, ensuring proper information handling per retention policy.
+    recommendation: >-
+      Enable and lock SanitizeOnShutdown for cache, cookies, history, sessions,
+      form data, and site settings. Automatically purge all sensitive data when
+      Firefox closes. Prevent users from disabling to ensure compliance with
+      information retention and sanitization policies.
+
