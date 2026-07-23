@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**fedora-policy-generator** (package name `ffpolicy`) is a Python desktop/CLI application
+**firefox-policy-generator** (package name `ffpolicy`) is a Python desktop/CLI application
 that generates, validates, and manages Firefox enterprise `policies.json` configurations. It
 ships as a PySide6 GUI, a headless CLI, and a self-contained Linux AppImage. See
 `docs/IMPLEMENTATION_PLAN.md` for the full design blueprint this codebase follows.
@@ -49,7 +49,9 @@ libxcb-render-util0 libxcb-util1` (already handled in `.github/workflows/build.y
 
 ```
 src/ffpolicy/
-├── core/       # Pure logic: generator, validator, version_check, paths, errors.
+├── core/       # Pure logic: generator, validator, version_check, paths, presets,
+│               # importer (parse an existing policies.json back into a
+│               # PolicyDocument), privilege (pkexec/sudo escalated writes), errors.
 │               # NEVER imports gui/ or PySide6 - enforced by lint-imports.
 ├── models/     # Pydantic models: policy_schema (parsed Mozilla schema),
 │               # policy_document (user's working set), extension, amo.
@@ -60,7 +62,8 @@ src/ffpolicy/
 ├── resources/  # Bundled schema_backup.json + categories.yaml (offline fallback),
 │               # presets/*.yaml (compliance baselines, e.g. disa_stig.yaml).
 ├── packager/   # ffpolicy.spec (PyInstaller), build_appimage.sh, .desktop, icon.
-├── cli.py      # Typer CLI: validate / generate / export / preview.
+├── cli.py      # Typer CLI: validate / generate / export / discover / import /
+│               # preview / presets / preset-info.
 └── __main__.py # Dispatches to cli.py when argv has args, else the GUI.
 ```
 
@@ -79,6 +82,22 @@ entirely for `--offline` CLI runs and tests.
 same `PolicyDocument` produces byte-identical `policies.json` - this is asserted by the
 golden-file test (`tests/functional/test_golden.py` vs `tests/fixtures/golden/`).
 Regenerate the golden file only for an intentional format change, via `make update-golden`.
+
+**Export targets & privilege escalation** (`core/paths.py`, `core/privilege.py`,
+`core/importer.py`): `ExportTarget` enumerates every standard Linux policy location
+Firefox reads (`/etc/firefox/policies/`, the per-distro `.../distribution/` install
+dirs for Fedora/RHEL/Debian/Ubuntu/ESR/manual-tarball installs, the snap - same `/etc`
+path since its install dir is read-only - and the Flatpak system-config extension
+mount point, system-wide and per-user), plus `distribution/` (relative to cwd) and
+`custom`. `target_requires_privileges()` flags which resolve to root-owned paths;
+`export_policies_json(..., allow_privilege_escalation=True)` retries a denied write via
+`core/privilege.write_with_escalation` (`pkexec`, falling back to `sudo`) rather than
+failing outright - opt-in only, exposed as `--elevate` on the CLI and an "elevate"
+checkbox in the GUI's `ExportTargetDialog`. `discover_installed_policies()` checks every
+target's default location for an existing file (deduping targets that share a path);
+`core/importer.import_policies_json()` parses one back into a `PolicyDocument` for
+re-tuning and re-exporting an already-deployed policy set - `ffpolicy discover`/`import`
+on the CLI, the File menu's `ImportSourceDialog` in the GUI.
 
 **Policy description panel** (`gui/policy_description.PolicyDescriptionPanel`): shown above
 every policy's editor (both the generic form and the ExtensionSettings manager), rendering
